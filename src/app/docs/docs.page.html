@@ -1,0 +1,233 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title class="header-title">
+      <span class="nabu-logo">&#9638;</span> CORTEX // DOCS
+    </ion-title>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- Tab Row -->
+  <div class="tab-row">
+    <button class="tab-btn" [class.active]="activeTab === 'architecture'" (click)="activeTab = 'architecture'">ARCH</button>
+    <button class="tab-btn" [class.active]="activeTab === 'agents'" (click)="activeTab = 'agents'">AGENTS</button>
+    <button class="tab-btn" [class.active]="activeTab === 'flows'" (click)="activeTab = 'flows'">FLOWS</button>
+    <button class="tab-btn" [class.active]="activeTab === 'repos'" (click)="activeTab = 'repos'">REPOS</button>
+    <button class="tab-btn" [class.active]="activeTab === 'endpoints'" (click)="activeTab = 'endpoints'">ENDPOINTS</button>
+    <button class="tab-btn" [class.active]="activeTab === 'codebase'" (click)="activeTab = 'codebase'">CODEBASE</button>
+  </div>
+
+  <!-- ARCHITECTURE TAB -->
+  <div class="section" *ngIf="activeTab === 'architecture'">
+    <div class="section-header">
+      <span class="section-title">MCP SERVER LAYER</span>
+      <span class="entity-count">{{ mcpServers.length }} SERVERS</span>
+    </div>
+
+    <div class="node-card" *ngFor="let server of mcpServers">
+      <div class="node-header">
+        <span class="node-type" [style.color]="getTypeColor(server.type)">MCP</span>
+        <span class="node-name">{{ server.name }}</span>
+        <span class="node-port" *ngIf="server.port">:{{ server.port }}</span>
+      </div>
+      <div class="node-desc">{{ server.description }}</div>
+      <div class="node-tools" *ngIf="server.tools">
+        <span class="tool-chip" *ngFor="let tool of server.tools">{{ tool }}</span>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-title">INFRASTRUCTURE</span>
+      <span class="entity-count">{{ infrastructure.length }} CONTAINERS</span>
+    </div>
+
+    <div class="infra-row" *ngFor="let c of infrastructure">
+      <span class="infra-led"></span>
+      <span class="infra-name">{{ c.name }}</span>
+      <span class="infra-port" *ngIf="c.port">:{{ c.port }}</span>
+      <span class="infra-type">{{ c.type }}</span>
+    </div>
+  </div>
+
+  <!-- AGENTS TAB -->
+  <div class="section" *ngIf="activeTab === 'agents'">
+    <div class="section-header">
+      <span class="section-title">AGENT LAYER</span>
+      <span class="entity-count">{{ agents.length }} AGENTS</span>
+    </div>
+
+    <div class="node-card" *ngFor="let agent of agents">
+      <div class="node-header">
+        <span class="node-type" [style.color]="getTypeColor(agent.type)">AGT</span>
+        <span class="node-name">{{ agent.name }}</span>
+        <span class="node-schedule" *ngIf="agent.schedule">{{ agent.schedule }}</span>
+      </div>
+      <div class="node-desc">{{ agent.description }}</div>
+      <div class="node-outputs" *ngIf="agent.outputs">
+        <span class="output-chip" *ngFor="let out of agent.outputs">{{ out }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FLOWS TAB -->
+  <div class="section" *ngIf="activeTab === 'flows'">
+    <div class="section-header">
+      <span class="section-title">DATA FLOWS</span>
+      <span class="entity-count">{{ dataFlows.length }} FLOWS</span>
+    </div>
+
+    <div class="flow-card" *ngFor="let flow of dataFlows">
+      <div class="flow-name">{{ flow.name }}</div>
+      <div class="flow-steps">
+        <span class="flow-step" *ngFor="let step of flow.steps; let last = last">
+          {{ step }}<span class="flow-arrow" *ngIf="!last"> &rarr; </span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPOS TAB -->
+  <div class="section" *ngIf="activeTab === 'repos'">
+    <div class="section-header">
+      <span class="section-title">REPOSITORY MAP</span>
+      <span class="entity-count">{{ repos.length }} REPOS</span>
+    </div>
+
+    <table class="repo-table">
+      <thead>
+        <tr>
+          <th>REPO</th>
+          <th>PURPOSE</th>
+          <th>PORT</th>
+          <th>TYPE</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let repo of repos">
+          <td class="repo-name">{{ repo.name }}</td>
+          <td>{{ repo.purpose }}</td>
+          <td class="repo-port">{{ repo.port || '-' }}</td>
+          <td class="repo-type">{{ repo.type }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ENDPOINTS TAB -->
+  <div class="section" *ngIf="activeTab === 'endpoints'">
+    <div class="section-header">
+      <span class="section-title">HTTP ENDPOINTS</span>
+      <span class="entity-count">{{ serviceEndpoints.length }} SERVICES</span>
+    </div>
+
+    <div class="endpoint-service" *ngFor="let svc of serviceEndpoints">
+      <div class="endpoint-service-header">
+        <span class="node-type" style="color: #00ff41">HTTP</span>
+        <span class="node-name">{{ svc.name }}</span>
+        <span class="node-port">:{{ svc.port }}</span>
+      </div>
+      <div class="endpoint-base-url">{{ svc.baseUrl }}</div>
+      <div class="endpoint-row" *ngFor="let ep of svc.endpoints">
+        <span class="endpoint-method" [class]="'method-' + ep.method.toLowerCase()">{{ ep.method }}</span>
+        <span class="endpoint-path">{{ ep.path }}</span>
+        <span class="endpoint-desc">{{ ep.description }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CODEBASE TAB -->
+  <div class="section" *ngIf="activeTab === 'codebase'">
+
+    <!-- Design Patterns -->
+    <div class="section-header">
+      <span class="section-title">DESIGN PATTERNS</span>
+      <span class="entity-count">{{ designPatterns.length }} PATTERNS</span>
+    </div>
+
+    <div class="node-card" *ngFor="let p of designPatterns">
+      <div class="node-header">
+        <span class="node-type" style="color: #00ff41">PTN</span>
+        <span class="node-name">{{ p.name }}</span>
+      </div>
+      <div class="node-desc">{{ p.description }}</div>
+      <div class="node-tools">
+        <span class="tool-chip">{{ p.where }}</span>
+      </div>
+    </div>
+
+    <!-- Principles -->
+    <div class="section-header">
+      <span class="section-title">12-FACTOR PRINCIPLES</span>
+      <span class="entity-count">{{ principles.length }}</span>
+    </div>
+
+    <div class="flow-card" *ngFor="let p of principles; let i = index">
+      <div class="flow-name" style="font-size: 0.85rem;">
+        <span style="color: #00ff41; margin-right: 8px;">{{ i + 1 }}.</span>{{ p }}
+      </div>
+    </div>
+
+    <!-- cortex-mcp Modules -->
+    <div class="section-header">
+      <span class="section-title">CORTEX-MCP MODULES</span>
+      <span class="entity-count">{{ cortexMcpModules.length }} FILES</span>
+    </div>
+
+    <table class="repo-table">
+      <thead>
+        <tr><th>MODULE</th><th>LOC</th><th>RESPONSIBILITY</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of cortexMcpModules">
+          <td class="repo-name">{{ m.name }}</td>
+          <td class="repo-port">{{ m.lines }}</td>
+          <td>{{ m.responsibility }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- ha-functions-mcp Modules -->
+    <div class="section-header">
+      <span class="section-title">HA-FUNCTIONS-MCP MODULES</span>
+      <span class="entity-count">{{ haFunctionsMcpModules.length }} FILES</span>
+    </div>
+
+    <table class="repo-table">
+      <thead>
+        <tr><th>MODULE</th><th>LOC</th><th>RESPONSIBILITY</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of haFunctionsMcpModules">
+          <td class="repo-name">{{ m.name }}</td>
+          <td class="repo-port">{{ m.lines }}</td>
+          <td>{{ m.responsibility }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- python_scripts Modules -->
+    <div class="section-header">
+      <span class="section-title">PYTHON SCRIPTS (AGENTS)</span>
+      <span class="entity-count">{{ pythonScriptsModules.length }} FILES</span>
+    </div>
+
+    <table class="repo-table">
+      <thead>
+        <tr><th>MODULE</th><th>LOC</th><th>RESPONSIBILITY</th></tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let m of pythonScriptsModules">
+          <td class="repo-name">{{ m.name }}</td>
+          <td class="repo-port">{{ m.lines }}</td>
+          <td>{{ m.responsibility }}</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+</ion-content>
