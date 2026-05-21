@@ -43,7 +43,7 @@ def slog(tag: str, **kv) -> None:
 
 
 bc.ensure_layout()
-mcp = FastMCP("cortex-board")
+mcp = FastMCP("board")
 
 
 # ---- Read ------------------------------------------------------------------

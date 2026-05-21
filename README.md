@@ -33,7 +33,7 @@ read-modify-write, so they need no rev and cannot lose updates.
 # one-time
 python3 -m venv .venv && .venv/bin/pip install -e .
 
-# MCP (registered in ~/.claude.json as "cortex-board", stdio)
+# MCP (registered in ~/.claude.json as "board", stdio)
 .venv/bin/python server.py
 
 # REST API for the app (systemd --user service cortex-board-api)
