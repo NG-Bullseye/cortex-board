@@ -1,21 +1,17 @@
 #!/usr/bin/env python3
 """
-Cortex Board MCP — let Claude manage the Kanban board safely.
+Cortex Board MCP — agents touch the board through docs/tickets/*.md (Leo's
+single ticket truth). Read is a live projection of those files; write creates
+or edits them in place. There is no parallel JSON store anymore.
 
-The board is five per-column JSON files under ~/cortex/board (see board_core).
-This server is a thin, typed layer over that core with one safety rule baked in:
+Read tools (always safe, just re-parse docs/tickets):
+    get_board, get_column
 
-  * Whole-column replacement (`set_column`) requires the `rev` you got from a
-    prior `get_column`/`get_board`. If the column changed in between, the call is
-    rejected as stale and you get the current content back to re-apply. That is
-    the "get-before-set, no blind overwrite" guarantee — implemented as a content
-    hash, not a timestamp, so it is exact.
-  * For everyday edits use the atomic single-ticket tools (`add_ticket`,
-    `move_ticket`, `update_ticket`, `remove_ticket`) — no rev needed, the
-    lost-update problem cannot occur for them.
-
-Read-before-write is therefore only a discipline for bulk reorders; the common
-path is safe by construction.
+Write tools (atomic edits of the .md files):
+    add_ticket     -> create a fresh T-NN_slug.md with **Status:** new
+    move_ticket    -> rewrite the **Status:** line of an existing ticket
+    update_ticket  -> rewrite the H1 heading (body edits stay manual)
+    remove_ticket  -> delete the ticket .md (for done items, prefer git mv to archive/)
 """
 from __future__ import annotations
 
@@ -24,113 +20,88 @@ from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
-import board_core as bc
+import tickets_source as ts
 
-# ---- Logging (grep-able: `grep set_column logs/server.log`) ----------------
+# ---- Logging (grep-able: `grep add_ticket logs/server.log`) -----------------
 LOG_DIR = Path(__file__).resolve().parent / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 LOG_FILE = LOG_DIR / "server.log"
 
 
 def slog(tag: str, **kv) -> None:
-    ts = time.strftime("%Y-%m-%d %H:%M:%S")
+    ts_ = time.strftime("%Y-%m-%d %H:%M:%S")
     parts = " ".join(f"{k}={v}" for k, v in kv.items())
     try:
         with LOG_FILE.open("a") as f:
-            f.write(f"{ts} {tag} {parts}\n")
+            f.write(f"{ts_} {tag} {parts}\n")
     except Exception:
         pass
 
 
-bc.ensure_layout()
 mcp = FastMCP("board")
 
 
-# ---- Read ------------------------------------------------------------------
+# ---- Read -------------------------------------------------------------------
 @mcp.tool()
 def get_board() -> dict:
-    """Read the whole Kanban board in one call.
+    """Read the whole Kanban board, projected live from ~/cortex/docs/tickets.
 
     Returns every column (backlog, new, inprogress, testing, done) with its
-    current `rev` (content hash), ticket count and tickets. Use the `rev` of a
-    column if you later want to `set_column` it. Read-only.
+    current `rev` (content hash), ticket count and tickets. Each card carries
+    `id` (T-NN / WD-NN) and `title` (`<id> — <heading title>`). Read-only.
     """
-    board = bc.read_board()
-    slog("get_board", **{c: board[c]["count"] for c in bc.COLUMNS})
-    return board
+    b = ts.read_board()
+    slog("get_board", **{c: b[c]["count"] for c in ts.COLUMNS})
+    return b
 
 
 @mcp.tool()
 def get_column(column: str) -> dict:
-    """Read one column -> {column, rev, count, tickets}.
+    """Read one column -> {column, rev, count, tickets}. Live from docs/tickets.
 
-    `column` must be one of: backlog, new, inprogress, testing, done. The
-    returned `rev` is the token required by `set_column`. Read-only.
+    `column` must be one of: backlog, new, inprogress, testing, done.
     """
     try:
-        out = bc.read_column(column)
-    except bc.UnknownColumn as e:
-        return {"ok": False, "error": str(e)}
-    slog("get_column", column=column, rev=out["rev"], count=out["count"])
+        out = ts.read_column(column)
+    except KeyError:
+        return {"ok": False, "error": f"unknown column {column!r}"}
+    slog("get_column", column=column, count=out["count"])
     return out
 
 
-# ---- Write (bulk, rev-guarded) ---------------------------------------------
+# ---- Write ------------------------------------------------------------------
 @mcp.tool()
-def set_column(column: str, tickets: list[dict], rev: str) -> dict:
-    """Replace a whole column's tickets at once. Requires `rev` from a prior
-    get_column/get_board for that column.
+def add_ticket(title: str, description: str = "", next_step: str = "") -> dict:
+    """Create a new ticket as a fresh T-NN_slug.md in ~/cortex/docs/tickets.
 
-    Use this only for bulk operations (reordering, mass edits). For moving or
-    editing a single ticket prefer move_ticket/update_ticket — they need no rev.
-
-    Each ticket is a dict with `title`, `description`, `next_step` (and optional
-    `id` to keep identity; omit `id` for new tickets). On success returns the new
-    {column, rev, count, tickets}. If `rev` is stale you get
-    {ok:false, error:"stale", current:{...}} — re-read from `current` and retry.
+    The new file gets `# T-NN — <title>`, `**Status:** new`, and the body
+    sections `## Kontext` (from `description`) and `## Next` (from `next_step`)
+    if those are non-empty. The id is the lowest free T-NN across active and
+    archive. Returns {id, title, path, column}.
     """
     try:
-        out = bc.set_column(column, tickets, rev)
-    except bc.UnknownColumn as e:
+        out = ts.add_ticket(title, description, next_step)
+    except Exception as e:
         return {"ok": False, "error": str(e)}
-    except bc.StaleRev as e:
-        slog("set_column.stale", column=column, passed=rev, current=e.current["rev"])
-        return {"ok": False, "error": "stale", "current": e.current}
-    slog("set_column", column=column, rev=out["rev"], count=out["count"])
-    return {"ok": True, **out}
-
-
-# ---- Write (atomic single-ticket ops, no rev needed) -----------------------
-@mcp.tool()
-def add_ticket(column: str, title: str, description: str = "", next_step: str = "") -> dict:
-    """Create a ticket and append it to a column. Atomic — no rev needed.
-
-    A ticket has a `title`, a longer `description`, and a `next_step` (the single
-    next action). Returns the created ticket (with generated id) and the column's
-    new rev.
-    """
-    try:
-        out = bc.add_ticket(column, title, description, next_step)
-    except bc.UnknownColumn as e:
-        return {"ok": False, "error": str(e)}
-    slog("add_ticket", column=column, id=out["ticket"]["id"])
+    slog("add_ticket", id=out["id"])
     return {"ok": True, **out}
 
 
 @mcp.tool()
-def move_ticket(ticket_id: str, to_column: str, position: int = -1) -> dict:
-    """Move a ticket to another column by id. Atomic — no rev needed.
+def move_ticket(ticket_id: str, to_column: str) -> dict:
+    """Move a ticket to another column by rewriting its `**Status:**` line.
 
-    `position` = -1 appends to the end (default); >=0 inserts at that index.
-    This is the normal way to advance a ticket new -> inprogress -> testing -> done.
+    `to_column` is one of: backlog (parks the ticket), new, inprogress, testing,
+    done. The canonical status word written into the file is `new` /
+    `in_progress` / `testing` / `done` / `parked`.
     """
     try:
-        out = bc.move_ticket(ticket_id, to_column, None if position < 0 else position)
-    except bc.UnknownColumn as e:
+        out = ts.move_ticket(ticket_id, to_column)
+    except KeyError:
+        return {"ok": False, "error": f"unknown column {to_column!r}"}
+    except FileNotFoundError as e:
         return {"ok": False, "error": str(e)}
-    except bc.TicketNotFound as e:
-        return {"ok": False, "error": str(e)}
-    slog("move_ticket", id=ticket_id, **{"from": out["from"], "to": out["to"]})
+    slog("move_ticket", id=ticket_id, to=to_column)
     return {"ok": True, **out}
 
 
@@ -141,15 +112,15 @@ def update_ticket(
     description: str | None = None,
     next_step: str | None = None,
 ) -> dict:
-    """Edit a ticket's title / description / next_step in place. Atomic.
-
-    Pass only the fields you want to change; omit the rest.
+    """Edit an existing ticket's H1 heading (the title). Description and
+    next_step are kept as the long-form body — for those, hand-edit the .md
+    (that is what the .md is for).
     """
     try:
-        out = bc.update_ticket(
+        out = ts.update_ticket(
             ticket_id, title=title, description=description, next_step=next_step
         )
-    except bc.TicketNotFound as e:
+    except FileNotFoundError as e:
         return {"ok": False, "error": str(e)}
     slog("update_ticket", id=ticket_id)
     return {"ok": True, **out}
@@ -157,12 +128,14 @@ def update_ticket(
 
 @mcp.tool()
 def remove_ticket(ticket_id: str) -> dict:
-    """Delete a ticket from the board by id. Atomic."""
+    """Delete a ticket .md file. For done items prefer `git mv` to
+    archive/<YYYY-MM>/ (Cortex Daily convention) — this tool removes outright.
+    """
     try:
-        out = bc.remove_ticket(ticket_id)
-    except bc.TicketNotFound as e:
+        out = ts.remove_ticket(ticket_id)
+    except FileNotFoundError as e:
         return {"ok": False, "error": str(e)}
-    slog("remove_ticket", id=ticket_id, column=out["column"])
+    slog("remove_ticket", id=ticket_id)
     return {"ok": True, **out}
 
 
