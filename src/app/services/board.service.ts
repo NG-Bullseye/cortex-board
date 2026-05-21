@@ -43,11 +43,11 @@ export class BoardService {
   constructor(private http: HttpClient) {}
 
   getBoard(): Observable<Board> {
-    return this.http.get<Board>(`${this.base}/board`);
+    return this.http.get<Board>(`${this.base}/api/board`);
   }
 
   getColumn(column: string): Observable<ColumnData> {
-    return this.http.get<ColumnData>(`${this.base}/board/${column}`);
+    return this.http.get<ColumnData>(`${this.base}/api/board/${column}`);
   }
 
   /** Emit the board now and then every `ms` milliseconds. */
