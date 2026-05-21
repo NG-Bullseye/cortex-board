@@ -32,6 +32,27 @@
  * https://ionicframework.com/docs/theming/dark-mode
  */
 
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
+@import "@ionic/angular/css/palettes/dark.always.css";
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import "@ionic/angular/css/palettes/dark.system.css";
+/* @import "@ionic/angular/css/palettes/dark.system.css"; */
+
+body {
+  background: #0a0a0a;
+  font-family: 'Courier New', 'Lucida Console', monospace;
+  color: #00ff41;
+}
+
+ion-content {
+  --background: #0a0a0a;
+  --color: #00ff41;
+}
+
+ion-toolbar {
+  --background: #050505 !important;
+  --color: #00ff41 !important;
+}
+
+// Remove Ionic segment default styling
+ion-segment, ion-segment-button {
+  display: none !important;
+}

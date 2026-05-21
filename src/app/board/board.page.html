@@ -1,0 +1,46 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title class="header-title">
+      <span class="logo">&#9638;</span> CORTEX BOARD
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button class="tbtn" [class.active]="showBacklog" (click)="showBacklog = !showBacklog">
+        BACKLOG
+      </ion-button>
+      <ion-button class="tbtn" routerLink="/home">NABU</ion-button>
+      <ion-button class="tbtn" routerLink="/docs">DOCS</ion-button>
+      <ion-button class="refresh-btn" (click)="refresh()" [disabled]="loading">
+        <ion-icon name="refresh-outline" [class.spin]="loading"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [scrollY]="false">
+
+  <div class="board-error" *ngIf="error">{{ error }}</div>
+
+  <div class="board" *ngIf="board">
+    <div class="column" *ngFor="let c of columns" [attr.data-col]="c">
+      <div class="col-head">
+        <span class="col-name">{{ columnLabels[c] }}</span>
+        <span class="col-count">{{ col(c)?.count || 0 }}</span>
+      </div>
+      <div class="col-body">
+        <div class="card" *ngFor="let t of col(c)?.tickets">
+          <div class="card-title">{{ t.title }}</div>
+          <div class="card-desc" *ngIf="t.description">{{ t.description }}</div>
+          <div class="card-next" *ngIf="t.next_step">
+            <span class="arrow">&#9656;</span> {{ t.next_step }}
+          </div>
+        </div>
+        <div class="col-empty" *ngIf="!col(c)?.tickets?.length">&mdash;</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="board-foot" *ngIf="lastRefresh">
+    SYNC {{ lastRefresh | date:'HH:mm:ss' }}
+  </div>
+
+</ion-content>
