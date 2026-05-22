@@ -29,7 +29,9 @@ from fastapi.responses import FileResponse
 
 import tickets_source as ts
 
-WWW = Path(os.environ.get("CORTEX_BOARD_WWW", "/home/leona/repos/cortex-dashboard/www"))
+# The Ionic app now lives in-repo at app/ and builds to app/www — served from
+# here at the same origin. Repo-relative, so it survives a move / disaster recovery.
+WWW = Path(os.environ.get("CORTEX_BOARD_WWW", str(Path(__file__).resolve().parent / "app" / "www")))
 
 app = FastAPI(title="Cortex Board API", version="2.0")
 
