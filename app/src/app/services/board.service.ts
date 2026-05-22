@@ -31,10 +31,10 @@ export interface Board {
 }
 
 /**
- * Reads the Cortex Kanban board from the REST API (api.py), which sits on the
- * same board_core that the MCP server edits — so the app and Claude share one
- * source of truth. Write-back (drag & drop) will use PUT /board/{column} with
- * the column's `rev` as If-Match.
+ * Reads the Cortex Kanban board from the REST API (api.py), which projects it
+ * live from ~/cortex/docs/tickets/*.md — the same ticket .md files Claude edits
+ * via the MCP, so the app and Claude share one source of truth. The app is
+ * read-only; writes (status changes, add/remove) happen through the MCP.
  */
 @Injectable({ providedIn: 'root' })
 export class BoardService {

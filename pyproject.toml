@@ -1,7 +1,7 @@
 [project]
 name = "cortex-board"
 version = "1.0.0"
-description = "Cortex Kanban board — FastMCP server (for Claude) + FastAPI (for the Ionic app) over per-column JSON files"
+description = "Cortex Kanban board — FastMCP server (for Claude) + FastAPI (REST + Ionic app host), projected live from ~/cortex/docs/tickets/*.md"
 requires-python = ">=3.10"
 dependencies = [
     "mcp>=1.2",
@@ -14,4 +14,4 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-py-modules = ["board_core", "server", "api"]
+py-modules = ["tickets_source", "server", "api"]
