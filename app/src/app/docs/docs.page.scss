@@ -1,0 +1,325 @@
+:host {
+  --bg: #0a0a1a;
+  --text: #c0c0c0;
+  --accent: #00ff41;
+  --cyan: #00ccff;
+  --magenta: #ff00ff;
+  --amber: #ffb000;
+  --border: #1a1a3a;
+}
+
+ion-toolbar {
+  --background: #0f1a3e;
+  --color: var(--cyan);
+}
+
+ion-content {
+  --background: var(--bg);
+  --color: var(--text);
+}
+
+.header-title {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  letter-spacing: 2px;
+
+  .nabu-logo {
+    color: var(--accent);
+  }
+}
+
+.tab-row {
+  display: flex;
+  gap: 2px;
+  padding: 8px;
+  background: #0d0d20;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: #666;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  cursor: pointer;
+
+  &.active {
+    color: var(--cyan);
+    border-color: var(--cyan);
+    background: rgba(0, 204, 255, 0.05);
+    box-shadow: 0 0 8px rgba(0, 204, 255, 0.15);
+  }
+}
+
+.section {
+  padding: 8px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+
+.section-title {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: var(--cyan);
+  letter-spacing: 2px;
+}
+
+.entity-count {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  color: #555;
+}
+
+// Node cards (MCP servers, agents)
+.node-card {
+  background: #0d0d20;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 2px;
+}
+
+.node-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.node-type {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  padding: 1px 4px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+}
+
+.node-name {
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+  color: #fff;
+  font-weight: bold;
+}
+
+.node-port {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: var(--amber);
+}
+
+.node-schedule {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  color: var(--amber);
+  margin-left: auto;
+}
+
+.node-desc {
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 6px;
+}
+
+.node-tools, .node-outputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tool-chip, .output-chip {
+  font-family: 'Courier New', monospace;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+.tool-chip {
+  background: rgba(0, 255, 65, 0.08);
+  color: var(--accent);
+  border: 1px solid rgba(0, 255, 65, 0.2);
+}
+
+.output-chip {
+  background: rgba(255, 0, 255, 0.08);
+  color: var(--magenta);
+  border: 1px solid rgba(255, 0, 255, 0.2);
+}
+
+// Infrastructure
+.infra-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(26, 26, 58, 0.5);
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}
+
+.infra-led {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 4px var(--accent);
+}
+
+.infra-name {
+  color: #fff;
+  flex: 1;
+}
+
+.infra-port {
+  color: var(--amber);
+}
+
+.infra-type {
+  color: #555;
+  font-size: 10px;
+}
+
+// Flow cards
+.flow-card {
+  background: #0d0d20;
+  border: 1px solid var(--border);
+  padding: 10px;
+  margin-bottom: 8px;
+  border-radius: 2px;
+}
+
+.flow-name {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: var(--cyan);
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+.flow-steps {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  color: #aaa;
+  line-height: 1.6;
+}
+
+.flow-step {
+  white-space: nowrap;
+}
+
+.flow-arrow {
+  color: var(--accent);
+}
+
+// Repo table
+.repo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+
+  th {
+    text-align: left;
+    color: var(--cyan);
+    padding: 6px 4px;
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    letter-spacing: 1px;
+  }
+
+  td {
+    padding: 6px 4px;
+    border-bottom: 1px solid rgba(26, 26, 58, 0.3);
+    color: #aaa;
+  }
+
+  .repo-name {
+    color: #fff;
+    font-weight: bold;
+  }
+
+  .repo-port {
+    color: var(--amber);
+  }
+
+  .repo-type {
+    color: #555;
+  }
+}
+
+// Endpoint cards
+.endpoint-service {
+  background: #0d0d20;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--cyan);
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 2px;
+}
+
+.endpoint-service-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.endpoint-base-url {
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.endpoint-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid rgba(26, 26, 58, 0.3);
+  font-family: 'Courier New', monospace;
+  font-size: 11px;
+}
+
+.endpoint-method {
+  font-size: 9px;
+  font-weight: bold;
+  padding: 1px 4px;
+  border-radius: 2px;
+  min-width: 32px;
+  text-align: center;
+
+  &.method-get {
+    background: rgba(0, 255, 65, 0.1);
+    color: var(--accent);
+    border: 1px solid rgba(0, 255, 65, 0.3);
+  }
+
+  &.method-post {
+    background: rgba(255, 176, 0, 0.1);
+    color: var(--amber);
+    border: 1px solid rgba(255, 176, 0, 0.3);
+  }
+}
+
+.endpoint-path {
+  color: #fff;
+  min-width: 140px;
+}
+
+.endpoint-desc {
+  color: #666;
+  font-size: 10px;
+}

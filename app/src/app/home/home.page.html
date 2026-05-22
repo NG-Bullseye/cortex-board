@@ -1,0 +1,124 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title class="header-title">
+      <span class="nabu-logo">&#9638;</span> NABU ENGINE
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="refresh()" [disabled]="loading" class="refresh-btn">
+        <ion-icon name="refresh-outline" [class.spin]="loading"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <!-- Status Bar -->
+  <div class="status-bar" *ngIf="status">
+    <div class="status-item" *ngFor="let z of getActiveZones()">
+      <span class="label">{{ z.zone }}</span>
+      <span class="value" *ngFor="let e of z.entities">
+        <span class="entity-badge" [class.on]="e.state === 'on'" [class.off]="e.state !== 'on'">
+          {{ e.name }}
+        </span>
+      </span>
+    </div>
+    <div class="status-item" *ngIf="lastRefresh">
+      <span class="label">UPD</span>
+      <span class="value time-value">{{ lastRefresh | date:'HH:mm:ss' }}</span>
+    </div>
+  </div>
+
+  <!-- Day Tabs -->
+  <div class="tab-row">
+    <button class="tab-btn" [class.active]="activeTab === 'so_do'" (click)="activeTab = 'so_do'">SO-DO</button>
+    <button class="tab-btn" [class.active]="activeTab === 'fr_sa'" (click)="activeTab = 'fr_sa'">FR-SA</button>
+    <span class="tab-spacer"></span>
+    <button class="tab-btn small" [class.active]="activeType === 'licht'" (click)="activeType = 'licht'">LICHT</button>
+    <button class="tab-btn small" [class.active]="activeType === 'musik'" (click)="activeType = 'musik'">MUSIK</button>
+  </div>
+
+  <!-- ENTITY FREQUENCY -->
+  <div class="entity-freq" *ngIf="entities.length > 0">
+    <div class="section-header">
+      <span class="section-title">ENTITY FREQUENCY // STATE SWITCHES</span>
+      <span class="entity-count">{{ entities.length }} TRACKED</span>
+    </div>
+    <div class="entity-row" *ngFor="let e of entities">
+      <span class="entity-bar-wrap">
+        <span class="entity-bar" [style.width.%]="getBarWidth(e)" [style.background]="getEntityColor(e)"
+              [style.box-shadow]="'0 0 6px ' + getEntityColor(e)"></span>
+      </span>
+      <span class="entity-label">{{ getEntityShortName(e.entity) }}</span>
+      <span class="entity-total" [style.color]="getEntityColor(e)">{{ e.total }}</span>
+      <span class="entity-breakdown">{{ e.on }}on {{ e.off }}off</span>
+      <span class="entity-last">{{ getLastTimeShort(e.last_time) }}</span>
+    </div>
+  </div>
+
+  <!-- LICHT TABLE -->
+  <div class="schedule-table" *ngIf="activeType === 'licht' && schedule">
+    <table>
+      <thead>
+        <tr>
+          <th class="time-col">ZEIT</th>
+          <th *ngFor="let zone of zones" class="zone-col">{{ zone | uppercase }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let slot of getLichtSlots()" class="slot-row">
+          <td class="time-col">
+            <span class="slot-time">{{ slot === 'sunset' ? 'SUNSET' : slot }}</span>
+          </td>
+          <td *ngFor="let zone of zones" class="zone-col"
+              [style.border-left-color]="getZoneDominantColor(slot, zone)">
+            <div class="entity" *ngFor="let e of getZoneEntities(slot, zone)" [class.is-off]="e.state === 'off'">
+              <span class="entity-led"
+                    [class.led-on]="e.state === 'on'"
+                    [class.led-off]="e.state === 'off'"
+                    [style.--led-color]="e.state === 'on' ? (e.color || '#ffcc77') : null">
+              </span>
+              <span class="entity-name" [class.off]="e.state === 'off'">{{ e.name }}</span>
+              <span class="entity-pct" *ngIf="e.state === 'on' && e.brightness">{{ e.brightness }}%</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MUSIK TABLE -->
+  <div class="schedule-table" *ngIf="activeType === 'musik' && schedule">
+    <table>
+      <thead>
+        <tr>
+          <th class="time-col">ZEIT</th>
+          <th>NAME</th>
+          <th>PLAYLIST</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let slot of getMusikSlots()" class="slot-row">
+          <td class="time-col">
+            <span class="slot-time">{{ slot }}</span>
+          </td>
+          <td class="musik-name">{{ getMusikSlot(slot)?.name }}</td>
+          <td class="musik-uri">
+            <span *ngFor="let uri of getMusikSlot(slot)?.uris" class="uri-chip">{{ uri | slice:17 }}</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ENGINE LOGS -->
+  <div class="logs-section" *ngIf="status?.logs?.length">
+    <div class="section-header">
+      <span class="section-title">ENGINE LOGS</span>
+    </div>
+    <div class="log-line" *ngFor="let line of getLogLines()">
+      <span class="log-text">{{ line }}</span>
+    </div>
+  </div>
+
+</ion-content>
