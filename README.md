@@ -34,3 +34,37 @@ python3 -m venv .venv && .venv/bin/pip install -e .   # one-time
 
 Truth dir overridable via `CORTEX_TICKETS_DIR`, API port via `CORTEX_BOARD_PORT`,
 app build dir via `CORTEX_BOARD_WWW` (default repo-relative `app/www`).
+
+## Board-Agent (`board` tmux-Session)
+
+A dedicated, generic Claude instance (Opus 4.7, bypass permissions = global default,
+no special priming) that lives in this repo and does one thing: **turn Telegram
+`/board` messages into tickets.** No system monitoring — that stays with the
+Watchdog.
+
+```
+Telegram  ──/board <text>──▶  watchdog telegram_inbox  ──▶  data/board_notify.jsonl
+                                  (route(): /board → here, everything else → watchdog)
+data/board_notify.jsonl  ──Monitor──▶  board-agent  ──mcp__board__add_ticket──▶
+                                                          ~/cortex/docs/tickets/T-NN_*.md
+                                                          → board column "new"
+```
+
+- **`/board <text>`** in Telegram → the Watchdog's `daemon/telegram_inbox.py`
+  splits it off (prefix stripped) into `data/board_notify.jsonl`. A bare `/board`
+  or any other message stays on the Watchdog channel (`telegram_notify.jsonl`),
+  untouched.
+- **`data/board_notify.jsonl`** — append-only intake stream (git-ignored, created
+  at runtime). One JSONL line per `/board` input: `{id, ts, chat_id, from_id, username, text}`.
+- The board-agent runs the built-in **Monitor** tool on that file; each new line
+  becomes a ticket via the `board` MCP (`add_ticket` → `T-NN_slug.md`, status `new`),
+  sorted into the right column.
+
+Spawn:
+
+```bash
+tmux new-session -d -s board "cd ~/repos/cortex-board && claude --model opus"
+```
+
+Then hand it its mandate (create tickets from `board_notify.jsonl`, no system
+monitoring, style per `~/cortex/CLAUDE.md`).
