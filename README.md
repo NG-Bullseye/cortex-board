@@ -43,22 +43,24 @@ no special priming) that lives in this repo and does one thing: **turn Telegram
 Watchdog.
 
 ```
-Telegram  ──/board <text>──▶  watchdog telegram_inbox  ──▶  data/board_notify.jsonl
-                                  (route(): /board → here, everything else → watchdog)
-data/board_notify.jsonl  ──Monitor──▶  board-agent  ──mcp__board__add_ticket──▶
-                                                          ~/cortex/docs/tickets/T-NN_*.md
-                                                          → board column "new"
+Telegram  ──any update──▶  watchdog telegram_inbox (the ONLY getUpdates poller)
+                                  └─ append-only ──▶  ~/repos/watchdog/data/telegram_updates.jsonl
+                                                       (one queue, raw updates, update_id = offset)
+board-agent  ──mcp__telegram-hub__telegram_poll(offset)──▶  filters `/board <text>` client-side
+             ──mcp__board__add_ticket──▶  ~/cortex/docs/tickets/T-NN_*.md  → column "new"
 ```
 
-- **`/board <text>`** in Telegram → the Watchdog's `daemon/telegram_inbox.py`
-  splits it off (prefix stripped) into `data/board_notify.jsonl`. A bare `/board`
-  or any other message stays on the Watchdog channel (`telegram_notify.jsonl`),
-  untouched.
-- **`data/board_notify.jsonl`** — append-only intake stream (git-ignored, created
-  at runtime). One JSONL line per `/board` input: `{id, ts, chat_id, from_id, username, text}`.
-- The board-agent runs the built-in **Monitor** tool on that file; each new line
-  becomes a ticket via the `board` MCP (`add_ticket` → `T-NN_slug.md`, status `new`),
-  sorted into the right column.
+- The Watchdog's `daemon/telegram_inbox.py` is the **Telegram hub**: the single
+  getUpdates poller. It no longer fans messages out — it writes every raw update
+  append-only into ONE queue `~/repos/watchdog/data/telegram_updates.jsonl`
+  (`{"update_id": N, "update": <raw>}`, `update_id` = monotonic offset).
+- The board-agent pulls that queue via the `telegram-hub` MCP:
+  `mcp__telegram-hub__telegram_poll(offset)` → `{"updates": [...], "next_offset": N}`
+  (keep your own offset). It **filters client-side**: only messages whose text
+  starts with `/board ` are board intake (prefix stripped); everything else is
+  the Watchdog's. A `tail -F` on the queue file is a pure wakeup; the structured
+  read is `telegram_poll`. Each `/board` line becomes a ticket via the `board`
+  MCP (`add_ticket` → `T-NN_slug.md`, status `new`).
 
 Spawn:
 
@@ -66,5 +68,5 @@ Spawn:
 tmux new-session -d -s board "cd ~/repos/cortex-board && claude --model opus"
 ```
 
-Then hand it its mandate (create tickets from `board_notify.jsonl`, no system
-monitoring, style per `~/cortex/CLAUDE.md`).
+Then hand it its mandate (create tickets from `/board` messages pulled via
+`telegram-hub`, no system monitoring, style per `~/cortex/CLAUDE.md`).
