@@ -46,7 +46,13 @@ app.add_middleware(
 
 @app.get("/api/healthz")
 def healthz() -> dict:
-    return {"ok": True, "columns": list(ts.COLUMNS), "source": str(ts.TICKETS_DIR)}
+    return {
+        "ok": True,
+        "columns": list(ts.COLUMNS),
+        "source": str(ts.TICKETS_DIR),
+        "scan_columns": list(ts.SCAN_COLUMNS),
+        "scan_source": str(ts.SCAN_TICKETS_DIR),
+    }
 
 
 @app.get("/api/board")
@@ -60,6 +66,19 @@ def column(column: str) -> dict:
         return ts.read_column(column)
     except KeyError:
         raise HTTPException(status_code=404, detail=f"unknown column {column!r}")
+
+
+@app.get("/api/scan-board")
+def scan_board() -> dict:
+    return ts.read_scan_board()
+
+
+@app.get("/api/scan-board/{column}")
+def scan_column(column: str) -> dict:
+    try:
+        return ts.read_scan_column(column)
+    except KeyError:
+        raise HTTPException(status_code=404, detail=f"unknown scan column {column!r}")
 
 
 # ---- Static: serve the built Ionic app with SPA fallback --------------------

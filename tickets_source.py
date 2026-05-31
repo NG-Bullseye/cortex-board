@@ -19,6 +19,10 @@ straightened on the fly into the four-column flow):
     testing / TESTING / 🧪           -> testing
     done / DONE / closed / ✅ / 🟢   -> done
     wont-do / hw-block / parked      -> backlog (parked bucket)
+
+SYSTEMSCANN board: ~/cortex/docs/scan-tickets/SC-NN_slug.md
+    Columns: new / open / resolved
+    **Status:** new | open | resolved
 """
 from __future__ import annotations
 
@@ -33,7 +37,12 @@ TICKETS_DIR = Path(os.environ.get(
     "CORTEX_TICKETS_DIR", Path.home() / "cortex" / "docs" / "tickets"
 ))
 
+SCAN_TICKETS_DIR = Path(os.environ.get(
+    "CORTEX_SCAN_TICKETS_DIR", Path.home() / "cortex" / "docs" / "scan-tickets"
+))
+
 COLUMNS = ("backlog", "new", "inprogress", "testing", "done")
+SCAN_COLUMNS = ("new", "open", "resolved")
 
 STATUS_TO_COLUMN: dict[str, str] = {
     "new": "new", "open": "new", "🆕": "new",
@@ -56,6 +65,7 @@ COLUMN_TO_STATUS = {
 }
 
 FILE_RE = re.compile(r"^(?P<id>(?:T|WD)-\d+[A-Za-z]?)_(?P<slug>.+)\.md$")
+SCAN_FILE_RE = re.compile(r"^(?P<id>SC-\d+[A-Za-z]?)_(?P<slug>.+)\.md$")
 STATUS_LINE_RE = re.compile(r"^\*\*[Ss]tatus\s*:\*\*\s*([^\s(]+)", re.M)
 STATUS_REPLACE_RE = re.compile(r"^\*\*[Ss]tatus\s*:\*\*[^\n]*$", re.M)
 HEADING_RE = re.compile(r"^#\s+(.+?)\s*$", re.M)
@@ -86,6 +96,20 @@ def _next_t_id() -> str:
     while n in used:
         n += 1
     return f"T-{n}"
+
+
+def _next_sc_id() -> str:
+    """Lowest unused SC-NN in the scan-tickets dir (SC-00 reserved for INDEX)."""
+    used: set[int] = set()
+    if SCAN_TICKETS_DIR.is_dir():
+        for p in SCAN_TICKETS_DIR.glob("SC-*.md"):
+            m = re.match(r"^SC-(\d+)", p.name)
+            if m:
+                used.add(int(m.group(1)))
+    n = 1  # SC-00 reserved for INDEX, start at 1
+    while n in used:
+        n += 1
+    return f"SC-{n}"
 
 
 # ---- Parse ------------------------------------------------------------------
@@ -310,7 +334,156 @@ def remove_ticket(ticket_id: str) -> dict:
     return {"id": ticket_id, "removed_path": target}
 
 
+# ---- SYSTEMSCANN Board -------------------------------------------------------
+
+# Status vocabulary for scan tickets: new | open | resolved
+SCAN_STATUS_TO_COLUMN: dict[str, str] = {
+    "new": "new",
+    "open": "open",
+    "resolved": "resolved",
+    "done": "resolved",
+    "closed": "resolved",
+}
+
+SCAN_COLUMN_TO_STATUS = {
+    "new": "new",
+    "open": "open",
+    "resolved": "resolved",
+}
+
+
+def _id_from_scan_filename(name: str) -> str | None:
+    m = SCAN_FILE_RE.match(name)
+    return m.group("id") if m else None
+
+
+def _iter_scan_ticket_files() -> list[Path]:
+    """Active scan tickets only (top-level SC-NN_*.md; excludes SC-00_INDEX.md)."""
+    if not SCAN_TICKETS_DIR.is_dir():
+        return []
+    out: list[Path] = []
+    for p in SCAN_TICKETS_DIR.glob("SC-*.md"):
+        fid = _id_from_scan_filename(p.name)
+        if fid is None or fid == "SC-00":
+            continue  # skip INDEX
+        out.append(p)
+    return sorted(out, key=lambda p: p.name)
+
+
+def _parse_scan_ticket(path: Path) -> dict | None:
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except Exception:
+        return None
+    fid = _id_from_scan_filename(path.name)
+    if not fid:
+        return None
+    tid, title = _parse_heading(text, fid)
+    raw_status = _parse_status(text)
+    column = SCAN_STATUS_TO_COLUMN.get(raw_status, "new")
+    desc = _extract_description(text)
+    display_title = f"{tid} — {title}" if title else tid
+    return {
+        "id": tid or fid,
+        "title": display_title,
+        "description": desc,
+        "next_step": "",
+        "status_raw": raw_status,
+        "column": column,
+        "path": str(path),
+    }
+
+
+def _find_scan_by_id(ticket_id: str) -> Path | None:
+    if not SCAN_TICKETS_DIR.is_dir():
+        return None
+    for p in SCAN_TICKETS_DIR.glob(f"{ticket_id}_*.md"):
+        return p
+    return None
+
+
+def read_scan_board() -> dict:
+    """Live projection of ~/cortex/docs/scan-tickets/SC-NN_*.md into 3 columns."""
+    buckets: dict[str, list[dict]] = {c: [] for c in SCAN_COLUMNS}
+    for p in _iter_scan_ticket_files():
+        t = _parse_scan_ticket(p)
+        if not t:
+            continue
+        col = t["column"] if t["column"] in SCAN_COLUMNS else "new"
+        buckets[col].append({
+            "id": t["id"],
+            "title": t["title"],
+            "description": t["description"],
+            "next_step": t["next_step"],
+        })
+    out: dict = {"columns": list(SCAN_COLUMNS), "source": str(SCAN_TICKETS_DIR)}
+    for c in SCAN_COLUMNS:
+        tk = buckets[c]
+        out[c] = {"column": c, "rev": _rev(tk), "count": len(tk), "tickets": tk}
+    return out
+
+
+def read_scan_column(column: str) -> dict:
+    if column not in SCAN_COLUMNS:
+        raise KeyError(column)
+    return read_scan_board()[column]
+
+
+def add_scan_ticket(title: str, description: str = "", next_step: str = "") -> dict:
+    """Create SC-NN_slug.md with **Status:** new in scan-tickets/."""
+    title = title.strip()
+    if not title:
+        raise ValueError("title required")
+    sid = _next_sc_id()
+    slug = _slugify(title)
+    path = SCAN_TICKETS_DIR / f"{sid}_{slug}.md"
+    body: list[str] = [
+        f"# {sid} — {title}",
+        "",
+        "**Status:** new",
+        f"**Erstellt:** {date.today().isoformat()}",
+        "",
+    ]
+    if description.strip():
+        body += ["## Kontext", "", description.strip(), ""]
+    if next_step.strip():
+        body += ["## Next", "", next_step.strip(), ""]
+    _atomic_write(path, "\n".join(body))
+    return {"id": sid, "title": title, "path": str(path), "column": "new"}
+
+
+def move_scan_ticket(ticket_id: str, to_column: str) -> dict:
+    """Change a scan ticket's status (new / open / resolved)."""
+    if to_column not in SCAN_COLUMNS:
+        raise KeyError(to_column)
+    path = _find_scan_by_id(ticket_id)
+    if not path:
+        raise FileNotFoundError(f"scan ticket {ticket_id} not found in {SCAN_TICKETS_DIR}")
+    text = path.read_text(encoding="utf-8")
+    new_line = f"**Status:** {SCAN_COLUMN_TO_STATUS[to_column]}"
+    if STATUS_REPLACE_RE.search(text):
+        new_text = STATUS_REPLACE_RE.sub(new_line, text, count=1)
+    else:
+        lines = text.splitlines()
+        out: list[str] = []
+        inserted = False
+        for l in lines:
+            out.append(l)
+            if not inserted and l.startswith("# "):
+                out.append("")
+                out.append(new_line)
+                inserted = True
+        new_text = "\n".join(out)
+        if not new_text.endswith("\n"):
+            new_text += "\n"
+    _atomic_write(path, new_text)
+    return {"id": ticket_id, "to_column": to_column, "path": str(path)}
+
+
 if __name__ == "__main__":
     b = read_board()
     print(json.dumps({c: b[c]["count"] for c in b["columns"]}))
     print(f"source: {b['source']}")
+    sb = read_scan_board()
+    print(json.dumps({c: sb[c]["count"] for c in sb["columns"]}))
+    print(f"scan source: {sb['source']}")

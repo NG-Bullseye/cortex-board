@@ -12,6 +12,11 @@ Write tools (atomic edits of the .md files):
     move_ticket    -> rewrite the **Status:** line of an existing ticket
     update_ticket  -> rewrite the H1 heading (body edits stay manual)
     remove_ticket  -> delete the ticket .md (for done items, prefer git mv to archive/)
+
+SYSTEMSCANN board (docs/scan-tickets/SC-NN_*.md):
+    get_scan_board     -> read all 3 columns (new, open, resolved)
+    add_scan_ticket    -> create SC-NN_slug.md with **Status:** new
+    move_scan_ticket   -> change status (new / open / resolved)
 """
 from __future__ import annotations
 
@@ -136,6 +141,52 @@ def remove_ticket(ticket_id: str) -> dict:
     except FileNotFoundError as e:
         return {"ok": False, "error": str(e)}
     slog("remove_ticket", id=ticket_id)
+    return {"ok": True, **out}
+
+
+# ---- SYSTEMSCANN Board -------------------------------------------------------
+
+@mcp.tool()
+def get_scan_board() -> dict:
+    """Read the whole SYSTEMSCANN board, projected live from ~/cortex/docs/scan-tickets.
+
+    Returns all 3 columns (new, open, resolved) with rev hash, count and tickets.
+    Each SC-NN card carries `id`, `title`, `description`, and `next_step`. Read-only.
+    """
+    b = ts.read_scan_board()
+    slog("get_scan_board", **{c: b[c]["count"] for c in ts.SCAN_COLUMNS})
+    return b
+
+
+@mcp.tool()
+def add_scan_ticket(title: str, description: str = "", next_step: str = "") -> dict:
+    """Create a new SYSTEMSCANN ticket as SC-NN_slug.md in ~/cortex/docs/scan-tickets.
+
+    The file gets `# SC-NN — <title>`, `**Status:** new`, and optional sections
+    `## Kontext` and `## Next`. The id is the lowest free SC-NN (SC-00 reserved
+    for INDEX). Returns {id, title, path, column}.
+    """
+    try:
+        out = ts.add_scan_ticket(title, description, next_step)
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+    slog("add_scan_ticket", id=out["id"])
+    return {"ok": True, **out}
+
+
+@mcp.tool()
+def move_scan_ticket(ticket_id: str, to_column: str) -> dict:
+    """Move a SYSTEMSCANN ticket to another column by rewriting its `**Status:**` line.
+
+    `ticket_id` must be a SC-NN id. `to_column` is one of: new, open, resolved.
+    """
+    try:
+        out = ts.move_scan_ticket(ticket_id, to_column)
+    except KeyError:
+        return {"ok": False, "error": f"unknown scan column {to_column!r} (must be new/open/resolved)"}
+    except FileNotFoundError as e:
+        return {"ok": False, "error": str(e)}
+    slog("move_scan_ticket", id=ticket_id, to=to_column)
     return {"ok": True, **out}
 
 

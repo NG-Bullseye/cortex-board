@@ -1,10 +1,19 @@
 <ion-header class="ion-no-border">
   <ion-toolbar>
     <ion-title class="header-title">
-      <span class="logo">&#9638;</span> CORTEX BOARD
+      <span class="logo">&#9638;</span>
+      {{ activeBoard === 'cortex' ? 'CORTEX BOARD' : 'SYSTEMSCANN' }}
     </ion-title>
     <ion-buttons slot="end">
-      <ion-button class="tbtn" [class.active]="showBacklog" (click)="showBacklog = !showBacklog">
+      <!-- Board switcher -->
+      <ion-button class="tbtn" [class.active]="activeBoard === 'cortex'" (click)="activeBoard = 'cortex'">
+        CORTEX
+      </ion-button>
+      <ion-button class="tbtn" [class.active]="activeBoard === 'systemscann'" (click)="activeBoard = 'systemscann'">
+        SCAN
+      </ion-button>
+      <!-- CORTEX-only: backlog toggle -->
+      <ion-button class="tbtn" *ngIf="activeBoard === 'cortex'" [class.active]="showBacklog" (click)="showBacklog = !showBacklog">
         BACKLOG
       </ion-button>
       <ion-button class="tbtn" routerLink="/home">NABU</ion-button>
@@ -20,7 +29,8 @@
 
   <div class="board-error" *ngIf="error">{{ error }}</div>
 
-  <div class="board" *ngIf="board">
+  <!-- CORTEX Board -->
+  <div class="board" *ngIf="activeBoard === 'cortex' && board">
     <div class="column" *ngFor="let c of columns" [attr.data-col]="c">
       <div class="col-head">
         <span class="col-name">{{ columnLabels[c] }}</span>
@@ -35,6 +45,26 @@
           </div>
         </div>
         <div class="col-empty" *ngIf="!col(c)?.tickets?.length">&mdash;</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SYSTEMSCANN Board -->
+  <div class="board" *ngIf="activeBoard === 'systemscann'">
+    <div class="column scan-col" *ngFor="let c of scanColumns" [attr.data-col]="'scan-' + c">
+      <div class="col-head">
+        <span class="col-name">{{ scanColumnLabels[c] }}</span>
+        <span class="col-count">{{ scanCol(c)?.count || 0 }}</span>
+      </div>
+      <div class="col-body">
+        <div class="card" *ngFor="let t of scanCol(c)?.tickets">
+          <div class="card-title">{{ t.title }}</div>
+          <div class="card-desc" *ngIf="t.description">{{ t.description }}</div>
+          <div class="card-next" *ngIf="t.next_step">
+            <span class="arrow">&#9656;</span> {{ t.next_step }}
+          </div>
+        </div>
+        <div class="col-empty" *ngIf="!scanCol(c)?.tickets?.length">&mdash;</div>
       </div>
     </div>
   </div>

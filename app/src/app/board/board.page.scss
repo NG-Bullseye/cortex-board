@@ -77,6 +77,11 @@ ion-content {
   &[data-col='inprogress'] { --accent: #ffb000; }
   &[data-col='testing']    { --accent: #ff00ff; }
   &[data-col='done']       { --accent: #00ff41; }
+
+  /* SYSTEMSCANN columns */
+  &[data-col='scan-new']      { --accent: #00bfff; }
+  &[data-col='scan-open']     { --accent: #ff6b35; }
+  &[data-col='scan-resolved'] { --accent: #00ff41; }
 }
 
 .col-head {

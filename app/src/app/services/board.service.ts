@@ -30,6 +30,14 @@ export interface Board {
   [key: string]: any;
 }
 
+export interface ScanBoard {
+  columns: string[];
+  new: ColumnData;
+  open: ColumnData;
+  resolved: ColumnData;
+  [key: string]: any;
+}
+
 /**
  * Reads the Cortex Kanban board from the REST API (api.py), which projects it
  * live from ~/cortex/docs/tickets/*.md — the same ticket .md files Claude edits
@@ -53,5 +61,14 @@ export class BoardService {
   /** Emit the board now and then every `ms` milliseconds. */
   pollBoard(ms = 5000): Observable<Board> {
     return timer(0, ms).pipe(switchMap(() => this.getBoard()));
+  }
+
+  getScanBoard(): Observable<ScanBoard> {
+    return this.http.get<ScanBoard>(`${this.base}/api/scan-board`);
+  }
+
+  /** Emit the scan board now and then every `ms` milliseconds. */
+  pollScanBoard(ms = 5000): Observable<ScanBoard> {
+    return timer(0, ms).pipe(switchMap(() => this.getScanBoard()));
   }
 }
