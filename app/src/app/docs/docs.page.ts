@@ -198,7 +198,7 @@ export class DocsPage {
     {
       name: 'cortex-mcp',
       port: 8900,
-      baseUrl: 'http://192.168.1.225:8900',
+      baseUrl: 'http://localhost:8900',
       endpoints: [
         { method: 'GET', path: '/health', description: 'Health check + tool count' },
         { method: 'GET', path: '/api/status', description: 'Engine zone states + logs + config summary' },
@@ -234,7 +234,7 @@ export class DocsPage {
     {
       name: 'speech-mcp',
       port: 8902,
-      baseUrl: 'http://192.168.1.225:8902',
+      baseUrl: 'http://localhost:8902',
       endpoints: [
         { method: 'GET', path: '/health', description: 'State: IDLE/LISTENING/PROCESSING' },
         { method: 'POST', path: '/listen', description: 'Record N seconds + transcribe {duration}' },
@@ -248,7 +248,7 @@ export class DocsPage {
     {
       name: 'worker-mcp',
       port: 8903,
-      baseUrl: 'http://192.168.1.225:8903',
+      baseUrl: 'http://localhost:8903',
       endpoints: [
         { method: 'GET', path: '/health', description: 'Status + job count' },
         { method: 'GET', path: '/jobs', description: 'Recent jobs (?limit=N)' },
