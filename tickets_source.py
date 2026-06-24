@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Project + write the Cortex board against ~/cortex/docs/tickets/*.md.
+Project the Cortex board against ~/cortex/docs/tickets/*.md.
 
 Per Leo's INDEX note (2026-05-21): docs/tickets is "die einzige Ticket-Wahrheit".
 The board is therefore a *live projection* of those files — no second store, no
@@ -12,7 +12,7 @@ Each ticket file is `T-NN_slug.md` or `WD-NN_slug.md` with:
     **Status:** <status>
     <body...>
 
-Status normalization (the messy vocabulary in the existing 109 tickets is
+Status normalization (the messy vocabulary in the existing tickets is
 straightened on the fly into the four-column flow):
     new / open / 🆕                  -> new
     in_progress / 🔄                 -> inprogress
@@ -23,285 +23,48 @@ straightened on the fly into the four-column flow):
 SYSTEMSCANN board: ~/cortex/docs/scan-tickets/SC-NN_slug.md
     Columns: new / open / resolved
     **Status:** new | open | resolved
+
+--- T-2 Phase 1 ---
+This module is now a thin facade over `config.BoardConfig` + `backend.BoardBackend`.
+The cortex-specific knobs (columns, status maps, id schema, paths, md regexes)
+live in config.py; the markdown read/write engine lives in backend.py. The
+module-level names and free functions below are kept verbatim so server.py /
+api.py (and any other importer) need no change. Nothing about the behaviour or
+the on-disk format changed.
 """
 from __future__ import annotations
 
-import hashlib
 import json
-import os
-import re
-from datetime import date
-from pathlib import Path
 
-TICKETS_DIR = Path(os.environ.get(
-    "CORTEX_TICKETS_DIR", Path.home() / "cortex" / "docs" / "tickets"
-))
+from config import CORTEX_BOARD, CORTEX_SCAN_BOARD
+from backend import MarkdownBackend
 
-SCAN_TICKETS_DIR = Path(os.environ.get(
-    "CORTEX_SCAN_TICKETS_DIR", Path.home() / "cortex" / "docs" / "scan-tickets"
-))
+# ---- Backend instances ------------------------------------------------------
+_board = MarkdownBackend(CORTEX_BOARD)
+_scan = MarkdownBackend(CORTEX_SCAN_BOARD)
 
-COLUMNS = ("backlog", "new", "inprogress", "testing", "done")
-SCAN_COLUMNS = ("new", "open", "resolved")
-
-STATUS_TO_COLUMN: dict[str, str] = {
-    "new": "new", "open": "new", "🆕": "new",
-    "in_progress": "inprogress", "in-progress": "inprogress", "inprogress": "inprogress",
-    "🔄": "inprogress",
-    "testing": "testing", "🧪": "testing",
-    "done": "done", "closed": "done", "✅": "done", "🟢": "done",
-    "wont-do": "backlog", "wontdo": "backlog",
-    "hw-block": "backlog", "hwblock": "backlog", "blocked": "backlog",
-    "deferred": "backlog", "parked": "backlog",
-}
-
-# Column -> canonical word written back into a .md when status changes.
-COLUMN_TO_STATUS = {
-    "new": "new",
-    "inprogress": "in_progress",
-    "testing": "testing",
-    "done": "done",
-    "backlog": "parked",
-}
-
-FILE_RE = re.compile(r"^(?P<id>(?:T|WD)-\d+[A-Za-z]?)_(?P<slug>.+)\.md$")
-SCAN_FILE_RE = re.compile(r"^(?P<id>SC-\d+[A-Za-z]?)_(?P<slug>.+)\.md$")
-STATUS_LINE_RE = re.compile(r"^\*\*[Ss]tatus\s*:\*\*\s*([^\s(]+)", re.M)
-STATUS_REPLACE_RE = re.compile(r"^\*\*[Ss]tatus\s*:\*\*[^\n]*$", re.M)
-HEADING_RE = re.compile(r"^#\s+(.+?)\s*$", re.M)
-SEP_RE = re.compile(r"\s+[—–\-]\s+")
+# ---- Backward-compatible module globals (server.py / api.py read these) -----
+TICKETS_DIR = CORTEX_BOARD.tickets_dir
+SCAN_TICKETS_DIR = CORTEX_SCAN_BOARD.tickets_dir
+COLUMNS = CORTEX_BOARD.columns
+SCAN_COLUMNS = CORTEX_SCAN_BOARD.columns
 
 
-# ---- IDs --------------------------------------------------------------------
-def _id_from_filename(name: str) -> str | None:
-    m = FILE_RE.match(name)
-    return m.group("id") if m else None
-
-
-def _slugify(title: str, max_len: int = 50) -> str:
-    s = re.sub(r"[^\w\s-]+", "", title.lower(), flags=re.UNICODE)
-    s = re.sub(r"[\s-]+", "_", s).strip("_")
-    return s[:max_len] or "ticket"
-
-
-def _next_t_id() -> str:
-    """Lowest unused T-NN across active + archive."""
-    used: set[int] = set()
-    if TICKETS_DIR.is_dir():
-        for p in list(TICKETS_DIR.glob("T-*.md")) + list(TICKETS_DIR.glob("archive/**/T-*.md")):
-            m = re.match(r"^T-(\d+)", p.name)
-            if m:
-                used.add(int(m.group(1)))
-    n = 1
-    while n in used:
-        n += 1
-    return f"T-{n}"
-
-
-def _next_sc_id() -> str:
-    """Lowest unused SC-NN in the scan-tickets dir (SC-00 reserved for INDEX)."""
-    used: set[int] = set()
-    if SCAN_TICKETS_DIR.is_dir():
-        for p in SCAN_TICKETS_DIR.glob("SC-*.md"):
-            m = re.match(r"^SC-(\d+)", p.name)
-            if m:
-                used.add(int(m.group(1)))
-    n = 1  # SC-00 reserved for INDEX, start at 1
-    while n in used:
-        n += 1
-    return f"SC-{n}"
-
-
-# ---- Parse ------------------------------------------------------------------
-def _parse_heading(text: str, fallback_id: str) -> tuple[str, str]:
-    m = HEADING_RE.search(text)
-    if not m:
-        return fallback_id, ""
-    line = m.group(1).strip()
-    parts = SEP_RE.split(line, maxsplit=1)
-    if len(parts) == 2:
-        return parts[0].strip(), parts[1].strip()
-    return fallback_id, line
-
-
-def _parse_status(text: str) -> str:
-    m = STATUS_LINE_RE.search(text)
-    if not m:
-        return ""
-    raw = m.group(1).strip()
-    raw = re.sub(r"[(),.\[\]]+$", "", raw)
-    return raw.lower()
-
-
-def _extract_description(text: str, max_len: int = 260) -> str:
-    """First non-metadata, non-heading paragraph after the H1."""
-    para: list[str] = []
-    skip_heading = True
-    for raw_line in text.splitlines():
-        s = raw_line.strip()
-        if skip_heading and s.startswith("# "):
-            skip_heading = False
-            continue
-        if s.startswith("#"):
-            if para:
-                break
-            continue
-        if not s:
-            if para:
-                break
-            continue
-        if s.startswith("**") and ":**" in s[:80]:
-            continue
-        if s.startswith(("- ", "* ")):
-            s = s[2:]
-        s = s.replace("**", "").replace("`", "")
-        para.append(s)
-        if sum(len(x) for x in para) > max_len + 80:
-            break
-    desc = " ".join(para)
-    if len(desc) > max_len:
-        desc = desc[: max_len - 1].rstrip() + "…"
-    return desc
-
-
-def _iter_ticket_files() -> list[Path]:
-    """Active tickets only (top-level *.md; excludes archive/, INDEX, README, EXECUTION_PLAN_*)."""
-    if not TICKETS_DIR.is_dir():
-        return []
-    out: list[Path] = []
-    for p in TICKETS_DIR.glob("*.md"):
-        if p.name in {"INDEX.md", "README.md"}:
-            continue
-        if p.name.startswith("EXECUTION_PLAN_"):
-            continue
-        if _id_from_filename(p.name) is None:
-            continue
-        out.append(p)
-    return sorted(out, key=lambda p: p.name)
-
-
-def _parse_ticket(path: Path) -> dict | None:
-    try:
-        text = path.read_text(encoding="utf-8", errors="ignore")
-    except Exception:
-        return None
-    fid = _id_from_filename(path.name)
-    if not fid:
-        return None
-    tid, title = _parse_heading(text, fid)
-    raw_status = _parse_status(text)
-    column = STATUS_TO_COLUMN.get(raw_status, "backlog")
-    desc = _extract_description(text)
-    display_title = f"{tid} — {title}" if title else tid
-    return {
-        "id": tid or fid,
-        "title": display_title,
-        "description": desc,
-        "next_step": "",
-        "status_raw": raw_status,
-        "column": column,
-        "path": str(path),
-    }
-
-
-def _rev(tickets: list[dict]) -> str:
-    canon = json.dumps(tickets, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
-    return hashlib.sha256(canon.encode("utf-8")).hexdigest()[:12]
-
-
-# ---- Read -------------------------------------------------------------------
+# ---- Ticket board (delegates to the markdown backend) -----------------------
 def read_board() -> dict:
-    buckets: dict[str, list[dict]] = {c: [] for c in COLUMNS}
-    for p in _iter_ticket_files():
-        t = _parse_ticket(p)
-        if not t:
-            continue
-        buckets[t["column"]].append({
-            "id": t["id"],
-            "title": t["title"],
-            "description": t["description"],
-            "next_step": t["next_step"],
-        })
-    out: dict = {"columns": list(COLUMNS), "source": str(TICKETS_DIR)}
-    for c in COLUMNS:
-        tk = buckets[c]
-        out[c] = {"column": c, "rev": _rev(tk), "count": len(tk), "tickets": tk}
-    return out
+    return _board.read_board()
 
 
 def read_column(column: str) -> dict:
-    if column not in COLUMNS:
-        raise KeyError(column)
-    return read_board()[column]
-
-
-# ---- Write helpers ----------------------------------------------------------
-def _atomic_write(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    tmp.write_text(content, encoding="utf-8")
-    os.replace(tmp, path)
-
-
-def _find_by_id(ticket_id: str) -> Path | None:
-    if not TICKETS_DIR.is_dir():
-        return None
-    for p in TICKETS_DIR.glob(f"{ticket_id}_*.md"):
-        return p
-    for p in TICKETS_DIR.glob(f"archive/**/{ticket_id}_*.md"):
-        return p
-    return None
+    return _board.read_column(column)
 
 
 def add_ticket(title: str, description: str = "", next_step: str = "") -> dict:
-    """Create a fresh T-NN_slug.md with `**Status:** new` and the body sections."""
-    title = title.strip()
-    if not title:
-        raise ValueError("title required")
-    tid = _next_t_id()
-    slug = _slugify(title)
-    path = TICKETS_DIR / f"{tid}_{slug}.md"
-    body: list[str] = [
-        f"# {tid} — {title}",
-        "",
-        "**Status:** new",
-        f"**Erstellt:** {date.today().isoformat()}",
-        "",
-    ]
-    if description.strip():
-        body += ["## Kontext", "", description.strip(), ""]
-    if next_step.strip():
-        body += ["## Next", "", next_step.strip(), ""]
-    _atomic_write(path, "\n".join(body))
-    return {"id": tid, "title": title, "path": str(path), "column": "new"}
+    return _board.add_ticket(title, description, next_step)
 
 
 def move_ticket(ticket_id: str, to_column: str) -> dict:
-    """Change a ticket's status by rewriting (or inserting) the `**Status:**` line."""
-    if to_column not in COLUMNS:
-        raise KeyError(to_column)
-    path = _find_by_id(ticket_id)
-    if not path:
-        raise FileNotFoundError(f"ticket {ticket_id} not found in {TICKETS_DIR}")
-    text = path.read_text(encoding="utf-8")
-    new_line = f"**Status:** {COLUMN_TO_STATUS[to_column]}"
-    if STATUS_REPLACE_RE.search(text):
-        new_text = STATUS_REPLACE_RE.sub(new_line, text, count=1)
-    else:
-        lines = text.splitlines()
-        out: list[str] = []
-        inserted = False
-        for l in lines:
-            out.append(l)
-            if not inserted and l.startswith("# "):
-                out.append("")
-                out.append(new_line)
-                inserted = True
-        new_text = "\n".join(out)
-        if not new_text.endswith("\n"):
-            new_text += "\n"
-    _atomic_write(path, new_text)
-    return {"id": ticket_id, "to_column": to_column, "path": str(path)}
+    return _board.move_ticket(ticket_id, to_column)
 
 
 def update_ticket(
@@ -310,174 +73,30 @@ def update_ticket(
     description: str | None = None,
     next_step: str | None = None,
 ) -> dict:
-    """Rewrite the H1 heading if `title` is given. (Body edits are out of scope —
-    hand-edit the .md for the long-form fields; that's what they are for.)"""
-    path = _find_by_id(ticket_id)
-    if not path:
-        raise FileNotFoundError(f"ticket {ticket_id} not found in {TICKETS_DIR}")
-    text = path.read_text(encoding="utf-8")
-    if title:
-        text = re.sub(
-            r"^#\s+.+$", f"# {ticket_id} — {title.strip()}", text, count=1, flags=re.M
-        )
-    _atomic_write(path, text)
-    return {"id": ticket_id, "path": str(path)}
+    return _board.update_ticket(
+        ticket_id, title=title, description=description, next_step=next_step
+    )
 
 
 def remove_ticket(ticket_id: str) -> dict:
-    """Delete the ticket .md. For done items prefer `git mv` to archive/<YYYY-MM>/."""
-    path = _find_by_id(ticket_id)
-    if not path:
-        raise FileNotFoundError(f"ticket {ticket_id} not found in {TICKETS_DIR}")
-    target = str(path)
-    path.unlink()
-    return {"id": ticket_id, "removed_path": target}
+    return _board.remove_ticket(ticket_id)
 
 
-# ---- SYSTEMSCANN Board -------------------------------------------------------
-
-# Status vocabulary for scan tickets: new | open | resolved
-SCAN_STATUS_TO_COLUMN: dict[str, str] = {
-    "new": "new",
-    "open": "open",
-    "resolved": "resolved",
-    "done": "resolved",
-    "closed": "resolved",
-}
-
-SCAN_COLUMN_TO_STATUS = {
-    "new": "new",
-    "open": "open",
-    "resolved": "resolved",
-}
-
-
-def _id_from_scan_filename(name: str) -> str | None:
-    m = SCAN_FILE_RE.match(name)
-    return m.group("id") if m else None
-
-
-def _iter_scan_ticket_files() -> list[Path]:
-    """Active scan tickets only (top-level SC-NN_*.md; excludes SC-00_INDEX.md)."""
-    if not SCAN_TICKETS_DIR.is_dir():
-        return []
-    out: list[Path] = []
-    for p in SCAN_TICKETS_DIR.glob("SC-*.md"):
-        fid = _id_from_scan_filename(p.name)
-        if fid is None or fid == "SC-00":
-            continue  # skip INDEX
-        out.append(p)
-    return sorted(out, key=lambda p: p.name)
-
-
-def _parse_scan_ticket(path: Path) -> dict | None:
-    try:
-        text = path.read_text(encoding="utf-8", errors="ignore")
-    except Exception:
-        return None
-    fid = _id_from_scan_filename(path.name)
-    if not fid:
-        return None
-    tid, title = _parse_heading(text, fid)
-    raw_status = _parse_status(text)
-    column = SCAN_STATUS_TO_COLUMN.get(raw_status, "new")
-    desc = _extract_description(text)
-    display_title = f"{tid} — {title}" if title else tid
-    return {
-        "id": tid or fid,
-        "title": display_title,
-        "description": desc,
-        "next_step": "",
-        "status_raw": raw_status,
-        "column": column,
-        "path": str(path),
-    }
-
-
-def _find_scan_by_id(ticket_id: str) -> Path | None:
-    if not SCAN_TICKETS_DIR.is_dir():
-        return None
-    for p in SCAN_TICKETS_DIR.glob(f"{ticket_id}_*.md"):
-        return p
-    return None
-
-
+# ---- SYSTEMSCANN board ------------------------------------------------------
 def read_scan_board() -> dict:
-    """Live projection of ~/cortex/docs/scan-tickets/SC-NN_*.md into 3 columns."""
-    buckets: dict[str, list[dict]] = {c: [] for c in SCAN_COLUMNS}
-    for p in _iter_scan_ticket_files():
-        t = _parse_scan_ticket(p)
-        if not t:
-            continue
-        col = t["column"] if t["column"] in SCAN_COLUMNS else "new"
-        buckets[col].append({
-            "id": t["id"],
-            "title": t["title"],
-            "description": t["description"],
-            "next_step": t["next_step"],
-        })
-    out: dict = {"columns": list(SCAN_COLUMNS), "source": str(SCAN_TICKETS_DIR)}
-    for c in SCAN_COLUMNS:
-        tk = buckets[c]
-        out[c] = {"column": c, "rev": _rev(tk), "count": len(tk), "tickets": tk}
-    return out
+    return _scan.read_board()
 
 
 def read_scan_column(column: str) -> dict:
-    if column not in SCAN_COLUMNS:
-        raise KeyError(column)
-    return read_scan_board()[column]
+    return _scan.read_column(column)
 
 
 def add_scan_ticket(title: str, description: str = "", next_step: str = "") -> dict:
-    """Create SC-NN_slug.md with **Status:** new in scan-tickets/."""
-    title = title.strip()
-    if not title:
-        raise ValueError("title required")
-    sid = _next_sc_id()
-    slug = _slugify(title)
-    path = SCAN_TICKETS_DIR / f"{sid}_{slug}.md"
-    body: list[str] = [
-        f"# {sid} — {title}",
-        "",
-        "**Status:** new",
-        f"**Erstellt:** {date.today().isoformat()}",
-        "",
-    ]
-    if description.strip():
-        body += ["## Kontext", "", description.strip(), ""]
-    if next_step.strip():
-        body += ["## Next", "", next_step.strip(), ""]
-    _atomic_write(path, "\n".join(body))
-    return {"id": sid, "title": title, "path": str(path), "column": "new"}
+    return _scan.add_ticket(title, description, next_step)
 
 
 def move_scan_ticket(ticket_id: str, to_column: str) -> dict:
-    """Change a scan ticket's status (new / open / resolved)."""
-    if to_column not in SCAN_COLUMNS:
-        raise KeyError(to_column)
-    path = _find_scan_by_id(ticket_id)
-    if not path:
-        raise FileNotFoundError(f"scan ticket {ticket_id} not found in {SCAN_TICKETS_DIR}")
-    text = path.read_text(encoding="utf-8")
-    new_line = f"**Status:** {SCAN_COLUMN_TO_STATUS[to_column]}"
-    if STATUS_REPLACE_RE.search(text):
-        new_text = STATUS_REPLACE_RE.sub(new_line, text, count=1)
-    else:
-        lines = text.splitlines()
-        out: list[str] = []
-        inserted = False
-        for l in lines:
-            out.append(l)
-            if not inserted and l.startswith("# "):
-                out.append("")
-                out.append(new_line)
-                inserted = True
-        new_text = "\n".join(out)
-        if not new_text.endswith("\n"):
-            new_text += "\n"
-    _atomic_write(path, new_text)
-    return {"id": ticket_id, "to_column": to_column, "path": str(path)}
+    return _scan.move_ticket(ticket_id, to_column)
 
 
 if __name__ == "__main__":
