@@ -35,12 +35,27 @@ the on-disk format changed.
 from __future__ import annotations
 
 import json
+import os
 
 from config import CORTEX_BOARD, CORTEX_SCAN_BOARD
 from backend import MarkdownBackend
 
+
+# ---- Backend selection (T-2 Phase 2a) ---------------------------------------
+# BOARD_BACKEND=todoist|markdown, default markdown. NO live cutover here — the
+# default keeps the on-disk md projection. The scan board stays markdown-only
+# (Phase 2a only ports the cortex ticket board to Todoist). Module globals +
+# function signatures below are identical regardless of backend, so server.py /
+# api.py need no change.
+def _make_board():
+    if os.environ.get("BOARD_BACKEND", "markdown").strip().lower() == "todoist":
+        from todoist_backend import TodoistBackend
+        return TodoistBackend(CORTEX_BOARD)
+    return MarkdownBackend(CORTEX_BOARD)
+
+
 # ---- Backend instances ------------------------------------------------------
-_board = MarkdownBackend(CORTEX_BOARD)
+_board = _make_board()
 _scan = MarkdownBackend(CORTEX_SCAN_BOARD)
 
 # ---- Backward-compatible module globals (server.py / api.py read these) -----
