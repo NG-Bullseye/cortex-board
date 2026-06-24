@@ -42,6 +42,15 @@ class BoardConfig:
     excluded_names: frozenset[str] = field(default_factory=frozenset)
     excluded_prefixes: tuple[str, ...] = field(default_factory=tuple)
 
+    # ---- Todoist backend (T-2 Phase 2a) ------------------------------------
+    # Where this same board lives when projected from Todoist instead of md:
+    # a sub-project `todoist_project` under the parent project `todoist_parent`,
+    # whose Sections are the columns. Pure config so a second board
+    # (maintenance/security, Phase 3) is just another BoardConfig — no engine
+    # change. Defaults keep existing CORTEX_BOARD construction unchanged.
+    todoist_parent: str = "boards"
+    todoist_project: str = "cortex"
+
     # ---- markdown format (shared across cortex boards, kept per-config so a
     #      future board can use a different format without touching the engine).
     status_line_re: re.Pattern = field(
