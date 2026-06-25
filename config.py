@@ -104,7 +104,7 @@ CORTEX_BOARD = BoardConfig(
     archive_find_globs=("archive/**/{id}_*.md",),
     iter_glob="*.md",
     excluded_names=frozenset({"INDEX.md", "README.md"}),
-    excluded_prefixes=("EXECUTION_PLAN_",),
+    excluded_prefixes=("EXECUTION_PLAN_", "RUNBOOK_"),
 )
 
 
