@@ -96,19 +96,31 @@ def _rel(repo: Path, path: Path) -> str:
 def _dirty_ticket_files(repo: Path, tickets_rel: str) -> list[str]:
     """Repo-relative paths under docs/tickets/ that are modified or untracked
     (the board-MCP edits we snapshot before archiving). Renames are listed by
-    their new path. Excludes deletions of files that no longer exist."""
-    out = _git(repo, "status", "--porcelain", "--", tickets_rel)
+    their new path. Excludes deletions of files that no longer exist.
+
+    Uses `--porcelain -z`: NUL-delimited and NEVER c-quoted, so non-ASCII
+    paths (Umlaut ticket names like T-91_…bedürfnis…md) pass through as raw
+    bytes instead of `"…bed\\303\\274rfnis…"`. Quoted octal escapes were fed
+    verbatim to `git add` and exploded the daily 05:00 housekeeping run with
+    exit 128. With `-z` each record is `XY <path>\\0`; a rename/copy (R/C)
+    emits a SECOND `<oldpath>\\0` record we skip."""
+    out = _git(repo, "status", "--porcelain", "-z", "--", tickets_rel)
+    records = out.split("\0")
     paths: list[str] = []
-    for line in out.splitlines():
-        if not line.strip():
+    i = 0
+    while i < len(records):
+        rec = records[i]
+        if not rec:
+            i += 1
             continue
-        status, _, rest = line[:2], line[2], line[3:]
-        # rename/copy entries look like "R  old -> new"
-        if "->" in rest:
-            rest = rest.split("->", 1)[1].strip()
-        rest = rest.strip().strip('"')
-        if rest:
-            paths.append(rest)
+        # each record: 2-char XY status, a space, then the (unquoted) path
+        xy, path = rec[:2], rec[3:]
+        if xy and xy[0] in ("R", "C"):
+            # rename/copy: the very next NUL field is the OLD path -> skip it
+            i += 1
+        if path:
+            paths.append(path)
+        i += 1
     return sorted(set(paths))
 
 
@@ -221,6 +233,10 @@ def _selftest() -> int:
             "T-4_delta.md":   "# T-4 — Delta\n\n**Status:** resolved (verifiziert)\n",
             "T-5_echo.md":    "# T-5 — Echo\n\n**Status:** wont-do\n",
             "T-6_foxtrot.md": "# T-6 — Foxtrot\n\n**Status:** ONLINE — live grün\n",
+            # non-ASCII (Umlaut) names — the real bug. T-8 is done (must archive),
+            # T-9 is modified below (drift-commit must stage it without exit 128).
+            "T-8_bedürfnis_done.md": "# T-8 — Bedürfnis\n\n**Status:** done\n",
+            "T-9_realität_drift.md": "# T-9 — Realität\n\n**Status:** new\n",
             "INDEX.md":       "# Board Index\n\nnot a ticket\n",
             "README.md":      "# Readme\n\nnot a ticket\n",
         }
@@ -231,16 +247,17 @@ def _selftest() -> int:
         _git(repo, "config", "user.email", "selftest@cortex")
         _git(repo, "config", "user.name", "selftest")
         # commit everything EXCEPT one untracked drift file, to prove drift-commit
-        _git(repo, "add", "docs/tickets/T-1_alpha.md", "docs/tickets/T-2_bravo.md",
-             "docs/tickets/T-3_charlie.md", "docs/tickets/T-4_delta.md",
-             "docs/tickets/T-5_echo.md", "docs/tickets/T-6_foxtrot.md",
-             "docs/tickets/INDEX.md", "docs/tickets/README.md")
+        # add everything (incl. the Umlaut files) so they are tracked & seeded
+        _git(repo, "add", "--", "docs/tickets")
         _git(repo, "commit", "-q", "-m", "seed")
         # now create an untracked board-MCP edit (drift) + modify a tracked one
+        # + modify the tracked Umlaut file (the path that c-quoting exploded on)
         (tickets / "T-7_golf.md").write_text(
             "# T-7 — Golf\n\n**Status:** new\n", encoding="utf-8")
         (tickets / "T-1_alpha.md").write_text(
             "# T-1 — Alpha\n\n**Status:** in_progress\n", encoding="utf-8")
+        (tickets / "T-9_realität_drift.md").write_text(
+            "# T-9 — Realität\n\n**Status:** in_progress\n", encoding="utf-8")
 
         # point a cortex-shaped BoardConfig at the temp tree
         cfg = replace(cfgmod.CORTEX_BOARD, tickets_dir=tickets)
@@ -265,6 +282,8 @@ def _selftest() -> int:
         check("T-2 (done) archived", "T-2_bravo.md" in moved)
         check("T-4 (resolved) archived", "T-4_delta.md" in moved)
         check("T-5 (wont-do) archived", "T-5_echo.md" in moved)
+        check("T-8 (done, Umlaut name) archived", "T-8_bedürfnis_done.md" in moved)
+        check("T-9 (Umlaut drift) stayed active", "T-9_realität_drift.md" in active)
         check("T-1 (new) stayed active", "T-1_alpha.md" in active)
         check("T-3 (parked) stayed active", "T-3_charlie.md" in active)
         check("T-6 (ONLINE — not in done-set) stayed active",
@@ -278,10 +297,16 @@ def _selftest() -> int:
         check("drift snapshot commit present",
               "daily working-tree snapshot vor Archivierung" in log)
         check("archive commit present",
-              "archive 3 done tickets -> archive/2026-06/" in log)
+              "archive 4 done tickets -> archive/2026-06/" in log)
         # T-7 is now tracked (drift-committed), tree clean of ticket dirt
         tracked = _git(repo, "ls-files", "docs/tickets/T-7_golf.md").strip()
         check("T-7 drift now tracked", tracked.endswith("T-7_golf.md"))
+        # the Umlaut drift file (T-9) must be staged+committed too — exit-128 proof.
+        # -z keeps the path raw (ls-files c-quotes non-ASCII without it).
+        tracked9 = _git(repo, "ls-files", "-z", "--",
+                        "docs/tickets/T-9_realität_drift.md").split("\0")
+        check("T-9 (Umlaut) drift now tracked",
+              "docs/tickets/T-9_realität_drift.md" in tracked9)
         dirty = _dirty_ticket_files(repo, "docs/tickets")
         check("working tree clean after run", dirty == [])
 
