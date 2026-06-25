@@ -53,11 +53,16 @@ class BoardConfig:
 
     # ---- markdown format (shared across cortex boards, kept per-config so a
     #      future board can use a different format without touching the engine).
+    # Postel — accept both the standard `**Status:** <val>` and the dash-list
+    # form `- **Status:** <val>` emitted by watchdog tools/ticket.py. The
+    # optional leading `- ` (or `* `) + whitespace keeps the parser tolerant;
+    # the replace pattern matches the whole line incl. any dash prefix so a
+    # status rewrite normalizes back to a valid, re-parseable standard line.
     status_line_re: re.Pattern = field(
-        default=re.compile(r"^\*\*[Ss]tatus\s*:\*\*\s*([^\s(]+)", re.M)
+        default=re.compile(r"^[ \t]*(?:[-*][ \t]+)?\*\*[Ss]tatus\s*:\*\*\s*([^\s(]+)", re.M)
     )
     status_replace_re: re.Pattern = field(
-        default=re.compile(r"^\*\*[Ss]tatus\s*:\*\*[^\n]*$", re.M)
+        default=re.compile(r"^[ \t]*(?:[-*][ \t]+)?\*\*[Ss]tatus\s*:\*\*[^\n]*$", re.M)
     )
     heading_re: re.Pattern = field(default=re.compile(r"^#\s+(.+?)\s*$", re.M))
     sep_re: re.Pattern = field(default=re.compile(r"\s+[—–\-]\s+"))
