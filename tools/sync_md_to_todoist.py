@@ -65,7 +65,7 @@ from pathlib import Path
 # live service (top-level imports, not a package) — same shim as migrate.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-import config as cfgmod  # noqa: E402
+from config import BOARDS  # noqa: E402  single source — registry lives in config.py
 from backend import MarkdownBackend  # noqa: E402
 from todoist_backend import TodoistBackend  # noqa: E402
 
@@ -74,12 +74,6 @@ from todoist_backend import TodoistBackend  # noqa: E402
 # ticket files; done.md / archive/ are not ticket files of the active board) —
 # Leo's Todoist stays the *active* board, not a graveyard.
 ACTIVE_COLUMNS = ("backlog", "new", "inprogress", "testing")
-
-# registry of syncable boards -> their BoardConfig. Adding maintenance/security
-# later is one line here once their BoardConfig exists in config.py.
-BOARDS = {
-    "cortex": cfgmod.CORTEX_BOARD,
-}
 
 
 def _short_desc(card: dict) -> str:

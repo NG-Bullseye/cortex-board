@@ -52,17 +52,12 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import config as cfgmod  # noqa: E402
+from config import BOARDS  # noqa: E402  single source — registry lives in config.py
 from backend import MarkdownBackend  # noqa: E402
 
 # Status words that mean "finished, move me to the graveyard". Matched against
 # the backend's parsed (lowercased, punctuation-stripped) status word.
 DONE_STATUS = frozenset({"done", "closed", "resolved", "wont-do", "wontfix"})
-
-# registry of archivable boards -> their BoardConfig. Adding maintenance/security
-# later is one line here once their BoardConfig exists in config.py.
-BOARDS = {
-    "cortex": cfgmod.CORTEX_BOARD,
-}
 
 _MONTH_RE = re.compile(r"^\d{4}-\d{2}$")
 

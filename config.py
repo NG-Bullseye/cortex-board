@@ -130,3 +130,57 @@ CORTEX_SCAN_BOARD = BoardConfig(
     reserved_ids=frozenset({"SC-00"}),  # SC-00 reserved for INDEX
     iter_glob="SC-*.md",
 )
+
+
+# ---- Cerebellum board (cerebellum/board/tickets, CB-NN ids) -----------------
+# The cerebellum prediction operator writes defect tickets (CB-NN) into its own
+# dedicated board dir (see cerebellum/integrations/board.py, which mirrors the
+# cortex ticket markdown format verbatim: `# CB-NN — title` + `**Status:** …`).
+# It defines NO own column/status vocabulary, so this reuses the cortex standard
+# (backlog/new/inprogress/testing/done) one-to-one — same status words, same
+# parser. Projected into Todoist as a sibling sub-project `cerebellum` under the
+# same `boards` parent.
+_CEREBELLUM_TICKETS_DIR = Path(os.environ.get(
+    "CEREBELLUM_TICKETS_DIR", Path.home() / "repos" / "cerebellum" / "board" / "tickets"
+))
+
+CEREBELLUM_BOARD = BoardConfig(
+    tickets_dir=_CEREBELLUM_TICKETS_DIR,
+    columns=("backlog", "new", "inprogress", "testing", "done"),
+    status_to_column={
+        "new": "new", "open": "new", "🆕": "new",
+        "in_progress": "inprogress", "in-progress": "inprogress", "inprogress": "inprogress",
+        "🔄": "inprogress",
+        "testing": "testing", "🧪": "testing",
+        "done": "done", "closed": "done", "✅": "done", "🟢": "done",
+        "wont-do": "backlog", "wontdo": "backlog",
+        "hw-block": "backlog", "hwblock": "backlog", "blocked": "backlog",
+        "deferred": "backlog", "parked": "backlog",
+    },
+    column_to_status={
+        "new": "new",
+        "inprogress": "in_progress",
+        "testing": "testing",
+        "done": "done",
+        "backlog": "parked",
+    },
+    file_re=re.compile(r"^(?P<id>CB-\d+[A-Za-z]?)_(?P<slug>.+)\.md$"),
+    default_column="backlog",
+    id_prefix="CB",
+    extra_id_globs=("archive/**/CB-*.md",),
+    archive_find_globs=("archive/**/{id}_*.md",),
+    iter_glob="CB-*.md",
+    excluded_names=frozenset({"INDEX.md", "README.md"}),
+    todoist_parent="boards",
+    todoist_project="cerebellum",
+)
+
+
+# ---- Registry of named boards (single source — both tools import from here) --
+# `sync_md_to_todoist.py` and `archive_done_tickets.py` used to each carry their
+# own duplicate BOARDS dict; consolidated here so adding a board is exactly one
+# line, and argparse `choices=sorted(BOARDS)` stays in lockstep across tools.
+BOARDS: dict[str, BoardConfig] = {
+    "cortex": CORTEX_BOARD,
+    "cerebellum": CEREBELLUM_BOARD,
+}
