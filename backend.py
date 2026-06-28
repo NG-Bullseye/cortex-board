@@ -318,3 +318,100 @@ class MarkdownBackend(BoardBackend):
         target = str(path)
         path.unlink()
         return {"id": ticket_id, "removed_path": target}
+
+
+class FindingsBackend(BoardBackend):
+    """Read-only board fed by a maintenance `findings.json` (T-135).
+
+    The maintenance scanner owns `config.findings_path` — a dict keyed by a
+    stable `key`, each value carrying `severity` (critical|warn|info), `title`,
+    `detail`, `suggestion`, `active` (bool), … This backend projects the
+    *active* findings into the same board shape `MarkdownBackend.read_board`
+    emits, bucketed by severity == column. A finding's board id is deterministic
+    (`<id_prefix>-<sha1(key)[:8]>`) so a second mirror run re-recognizes the same
+    Todoist task (round-trip via `TodoistBackend._parse_id_title`: the display
+    title is `"MNT-<hash> — <title>"`, split on the standard ` — ` separator).
+
+    READ-ONLY: it never writes findings.json (the scanner's single source).
+    A missing/empty file yields an empty board (no crash). All mutation methods
+    raise — this board is a mirror of an externally-maintained source.
+    """
+
+    def __init__(self, config: BoardConfig) -> None:
+        self.config = config
+
+    def _ticket_id(self, key: str) -> str:
+        h = hashlib.sha1(key.encode("utf-8")).hexdigest()[:8]
+        return f"{self.config.id_prefix}-{h}"
+
+    def _load_findings(self) -> list[dict]:
+        path = self.config.findings_path
+        if not path or not Path(path).is_file():
+            return []
+        try:
+            data = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            return []
+        if not isinstance(data, dict):
+            return []
+        return [v for v in data.values() if isinstance(v, dict) and v.get("active") is True]
+
+    @staticmethod
+    def _description(finding: dict) -> str:
+        detail = (finding.get("detail") or "").strip()
+        suggestion = (finding.get("suggestion") or "").strip()
+        return f"{detail}\nFix: {suggestion}" if suggestion else detail
+
+    def read_board(self) -> dict:
+        cfg = self.config
+        buckets: dict[str, list[dict]] = {c: [] for c in cfg.columns}
+        for f in self._load_findings():
+            key = f.get("key")
+            if not key:
+                continue
+            sev = (f.get("severity") or "").strip().lower()
+            col = sev if sev in cfg.columns else cfg.default_column
+            tid = self._ticket_id(key)
+            title = (f.get("title") or key).strip()
+            buckets[col].append({
+                "id": tid,
+                "title": f"{tid} — {title}",
+                "description": self._description(f),
+                "next_step": "",
+            })
+        # stable order within a column (deterministic mirror diffs)
+        out: dict = {"columns": list(cfg.columns), "source": str(cfg.findings_path)}
+        for c in cfg.columns:
+            tk = sorted(buckets[c], key=lambda t: t["id"])
+            out[c] = {"column": c, "rev": _rev(tk), "count": len(tk), "tickets": tk}
+        return out
+
+    def read_column(self, column: str) -> dict:
+        if column not in self.config.columns:
+            raise KeyError(column)
+        return self.read_board()[column]
+
+    # ---- mutations: this board mirrors an external source, it never writes ---
+    def _readonly(self) -> "NoReturn":  # type: ignore[name-defined]
+        raise NotImplementedError(
+            "FindingsBackend is read-only — findings.json is owned by the "
+            "maintenance scanner; the board only mirrors it."
+        )
+
+    def add_ticket(self, title: str, description: str = "", next_step: str = "") -> dict:
+        self._readonly()
+
+    def move_ticket(self, ticket_id: str, to_column: str) -> dict:
+        self._readonly()
+
+    def update_ticket(
+        self,
+        ticket_id: str,
+        title: str | None = None,
+        description: str | None = None,
+        next_step: str | None = None,
+    ) -> dict:
+        self._readonly()
+
+    def remove_ticket(self, ticket_id: str) -> dict:
+        self._readonly()

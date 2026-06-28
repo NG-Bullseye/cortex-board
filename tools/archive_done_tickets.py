@@ -183,6 +183,14 @@ def _push(repo: Path, dry_run: bool, no_push: bool) -> bool:
 # --------------------------------------------------------------------------- #
 def run(board_key: str, month: str, dry_run: bool, no_push: bool) -> int:
     board_cfg = BOARDS[board_key]
+    # findings-source boards (e.g. maintenance) have no per-ticket md files and
+    # no done/archive lifecycle — the scanner prunes its own findings.json. There
+    # is nothing to housekeep; skip gracefully instead of running git over a
+    # non-board dir. (The board-mirror unit never invokes archive for these.)
+    if getattr(board_cfg, "source", "markdown") != "markdown":
+        print(f"=== archive_done_tickets  board={board_key}  source="
+              f"{board_cfg.source}: no md/archive lifecycle — skipped ===")
+        return 0
     repo = _repo_root(board_cfg.tickets_dir)
     tickets_rel = _rel(repo, board_cfg.tickets_dir)
 
