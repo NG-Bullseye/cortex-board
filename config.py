@@ -51,6 +51,18 @@ class BoardConfig:
     todoist_parent: str = "boards"
     todoist_project: str = "cortex"
 
+    # ---- source backend (T-135) --------------------------------------------
+    # Which BoardBackend projects this board. Default "markdown" keeps every
+    # existing board (cortex/cerebellum) byte-identical — they are file-backed
+    # `<ID>_slug.md` boards. "findings" reads a maintenance-style findings.json
+    # (a dict keyed by a stable `key`, values carry severity/title/detail/…) and
+    # is strictly READ-ONLY (the maintenance scanner owns that file). The backend
+    # factory in the mirror tool dispatches on this field; the Todoist sink is
+    # source-agnostic.
+    source: str = "markdown"
+    # findings.json path for source=="findings" boards (None for markdown).
+    findings_path: Path | None = None
+
     # ---- markdown format (shared across cortex boards, kept per-config so a
     #      future board can use a different format without touching the engine).
     # Postel — accept both the standard `**Status:** <val>` and the dash-list
@@ -176,6 +188,39 @@ CEREBELLUM_BOARD = BoardConfig(
 )
 
 
+# ---- Maintenance board (findings.json source, MNT-<hash> ids) ---------------
+# The maintenance scanner (~/repos/maintenance/scan.py) writes a single
+# state/findings.json (dict keyed by a stable `key`; each value carries
+# severity ∈ {critical,warn,info}, title, detail, suggestion, active(bool), …).
+# This board projects the *active* findings into Leo's Todoist as a sibling
+# sub-project `maintenance` under the same `boards` parent — same Todoist sink
+# as the cortex/cerebellum md boards, but fed by `FindingsBackend` instead of
+# `MarkdownBackend` (source="findings"). READ-ONLY: nothing here ever writes
+# findings.json or MAINTENANCE_LOG.md — the scanner stays the single source.
+#
+# Columns ARE the severities (identity status<->column map). `tickets_dir` /
+# `file_re` are required by the dataclass but unused by FindingsBackend; they
+# carry harmless sane values (the state dir / a never-matching regex) so the
+# board never accidentally behaves like a markdown board.
+_MAINTENANCE_FINDINGS = Path(os.environ.get(
+    "MAINTENANCE_FINDINGS", Path.home() / "repos" / "maintenance" / "state" / "findings.json"
+))
+
+MAINTENANCE_BOARD = BoardConfig(
+    tickets_dir=_MAINTENANCE_FINDINGS.parent,  # unused by FindingsBackend
+    columns=("critical", "warn", "info"),
+    status_to_column={"critical": "critical", "warn": "warn", "info": "info"},
+    column_to_status={"critical": "critical", "warn": "warn", "info": "info"},
+    file_re=re.compile(r"^(?!x)x$"),  # never matches — findings source, no md files
+    default_column="info",
+    id_prefix="MNT",
+    source="findings",
+    findings_path=_MAINTENANCE_FINDINGS,
+    todoist_parent="boards",
+    todoist_project="maintenance",
+)
+
+
 # ---- Registry of named boards (single source — both tools import from here) --
 # `sync_md_to_todoist.py` and `archive_done_tickets.py` used to each carry their
 # own duplicate BOARDS dict; consolidated here so adding a board is exactly one
@@ -183,4 +228,5 @@ CEREBELLUM_BOARD = BoardConfig(
 BOARDS: dict[str, BoardConfig] = {
     "cortex": CORTEX_BOARD,
     "cerebellum": CEREBELLUM_BOARD,
+    "maintenance": MAINTENANCE_BOARD,
 }

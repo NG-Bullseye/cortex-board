@@ -65,15 +65,26 @@ from pathlib import Path
 # live service (top-level imports, not a package) — same shim as migrate.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from config import BOARDS  # noqa: E402  single source — registry lives in config.py
-from backend import MarkdownBackend  # noqa: E402
+from config import BOARDS, BoardConfig  # noqa: E402  single source — registry in config.py
+from backend import MarkdownBackend, FindingsBackend, BoardBackend  # noqa: E402
 from todoist_backend import TodoistBackend  # noqa: E402
 
-# active columns that mirror into Todoist. `done`/archive are intentionally
-# excluded here AND never read from md (read_board pulls only top-level active
-# ticket files; done.md / archive/ are not ticket files of the active board) —
-# Leo's Todoist stays the *active* board, not a graveyard.
-ACTIVE_COLUMNS = ("backlog", "new", "inprogress", "testing")
+
+def _source_backend(cfg: BoardConfig) -> BoardBackend:
+    """Pick the read-side backend for the board's `source` (T-135). markdown =
+    file-per-ticket `<ID>_slug.md` board; findings = read-only findings.json
+    (maintenance). The Todoist sink downstream is source-agnostic."""
+    if cfg.source == "findings":
+        return FindingsBackend(cfg)
+    return MarkdownBackend(cfg)
+
+
+def _active_columns(cfg: BoardConfig) -> tuple[str, ...]:
+    """Columns mirrored into Todoist: every column except the `done` graveyard.
+    For cortex/cerebellum this yields ("backlog","new","inprogress","testing")
+    byte-identical to the old hardcoded constant; for the maintenance findings
+    board (critical/warn/info, no done column) it yields all three."""
+    return tuple(c for c in cfg.columns if c != "done")
 
 
 def _short_desc(card: dict) -> str:
@@ -92,12 +103,13 @@ def build_plan(board_cfg, backend: TodoistBackend, only: str | None):
       updates = [(task, col, new_content|None, new_desc|None)]  (None = unchanged)
       trashes = [task]   (active todoist tasks whose id left the md board)
     """
-    md = MarkdownBackend(board_cfg)
-    board = md.read_board()  # active columns only; done/archive never read
+    src = _source_backend(board_cfg)
+    board = src.read_board()  # active columns only; done/archive never read
 
     # md side: id -> (column, card). active columns only.
+    active_columns = _active_columns(board_cfg)
     md_by_id: dict[str, tuple[str, dict]] = {}
-    for col in ACTIVE_COLUMNS:
+    for col in active_columns:
         for card in board.get(col, {}).get("tickets", []):
             tid, _ = backend._parse_id_title(card["title"])
             if not tid:
@@ -171,7 +183,8 @@ def sync(board_key: str, dry_run: bool, only: str | None) -> int:
           f"never writes md)")
     print(f"  target: todoist parent={board_cfg.todoist_parent!r} "
           f"project={board_cfg.todoist_project!r}")
-    print(f"  active columns synced: {ACTIVE_COLUMNS}  (done/archive never read)")
+    print(f"  source backend: {board_cfg.source}")
+    print(f"  active columns synced: {_active_columns(board_cfg)}  (done/archive never read)")
 
     creates, updates, trashes, sections, project_id = build_plan(
         board_cfg, backend, only
