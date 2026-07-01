@@ -20,6 +20,7 @@ SYSTEMSCANN board (docs/scan-tickets/SC-NN_*.md):
 """
 from __future__ import annotations
 
+import os
 import time
 from pathlib import Path
 
@@ -32,11 +33,46 @@ LOG_DIR = Path(__file__).resolve().parent / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 LOG_FILE = LOG_DIR / "server.log"
 
+# Rotations-Schwelle + Anzahl gehaltener Alt-Files. Defaults konservativ,
+# per env override-fähig (systemweite Angleichung ohne Code-Change).
+# Semantik bewusst 1:1 gespiegelt zu watchdog/slog.py (T-164 PR-1) — cortex-board
+# ist ein separates Repo mit eigenem venv, kann also nicht importieren; eine
+# akzeptierte Cross-Repo-Kopie statt eines pip-Pakets (YAGNI-deferred).
+SLOG_MAX_BYTES = int(os.environ.get("SLOG_MAX_BYTES", 1_048_576))  # 1 MiB
+SLOG_RETAIN = int(os.environ.get("SLOG_RETAIN", 3))  # .1 .. .RETAIN
+
+
+def _rotate(log_file: Path) -> None:
+    """Size-Rotation: log > SLOG_MAX_BYTES → log→.1, .1→.2 … älteste (.RETAIN) fällt weg.
+
+    WARUM: Append-only-Logs wachsen sonst unbounded. Best-effort + race-tolerant
+    (mehrere server.py-Prozesse schreiben denselben Pfad) — jeder rename ist einzeln
+    try/except-gekapselt, ein fehlendes Zwischen-File oder verlorenes Rename darf den
+    Log-/MCP-Pfad nie brechen. missing-tolerant.
+    """
+    try:
+        if not log_file.exists() or log_file.stat().st_size <= SLOG_MAX_BYTES:
+            return
+    except OSError:
+        return
+    # Älteste zuerst wegräumen, dann von hinten nach vorne durchschieben.
+    for i in range(SLOG_RETAIN, 0, -1):
+        src = log_file if i == 1 else log_file.with_suffix(log_file.suffix + f".{i - 1}")
+        dst = log_file.with_suffix(log_file.suffix + f".{i}")
+        try:
+            if i == SLOG_RETAIN and dst.exists():
+                dst.unlink()  # älteste über RETAIN hinaus fällt weg
+            if src.exists():
+                src.rename(dst)
+        except OSError:
+            pass  # best-effort — verlorenes Rename bricht nichts
+
 
 def slog(tag: str, **kv) -> None:
     ts_ = time.strftime("%Y-%m-%d %H:%M:%S")
     parts = " ".join(f"{k}={v}" for k, v in kv.items())
     try:
+        _rotate(LOG_FILE)  # vor jedem Append size-rotieren (bounded)
         with LOG_FILE.open("a") as f:
             f.write(f"{ts_} {tag} {parts}\n")
     except Exception:
