@@ -56,12 +56,15 @@ class BoardConfig:
     # existing board (cortex/cerebellum) byte-identical — they are file-backed
     # `<ID>_slug.md` boards. "findings" reads a maintenance-style findings.json
     # (a dict keyed by a stable `key`, values carry severity/title/detail/…) and
-    # is strictly READ-ONLY (the maintenance scanner owns that file). The backend
-    # factory in the mirror tool dispatches on this field; the Todoist sink is
+    # is strictly READ-ONLY (the maintenance scanner owns that file). "github"
+    # projects from GitHub Issues (SSOT) via `gh` CLI — requires `github_repo`.
+    # The backend factory dispatches on this field; the Todoist sink is
     # source-agnostic.
     source: str = "markdown"
     # findings.json path for source=="findings" boards (None for markdown).
     findings_path: Path | None = None
+    # GitHub repo for source=="github" boards, e.g. "NG-Bullseye/cortex".
+    github_repo: str | None = None
 
     # ---- markdown format (shared across cortex boards, kept per-config so a
     #      future board can use a different format without touching the engine).
@@ -221,12 +224,51 @@ MAINTENANCE_BOARD = BoardConfig(
 )
 
 
+# ---- GitHub-backed cortex board (NG-Bullseye/cortex Issues as SSOT) ----------
+# Same columns + status vocabulary as CORTEX_BOARD, but projected from GitHub
+# Issues via `gh` CLI. Ticket IDs (T-NN, WD-NN) live in issue titles; status is
+# a `status:*` label. This is the SSOT board — the md directory becomes a
+# lagging mirror during migration and eventually an archive.
+GITHUB_CORTEX_BOARD = BoardConfig(
+    tickets_dir=_TICKETS_DIR,  # kept for archive lookups during migration
+    columns=("backlog", "new", "inprogress", "testing", "done"),
+    status_to_column={
+        "new": "new", "open": "new", "🆕": "new",
+        "in_progress": "inprogress", "in-progress": "inprogress", "inprogress": "inprogress",
+        "🔄": "inprogress",
+        "testing": "testing", "🧪": "testing",
+        "done": "done", "closed": "done", "✅": "done", "🟢": "done",
+        "wont-do": "backlog", "wontdo": "backlog",
+        "hw-block": "backlog", "hwblock": "backlog", "blocked": "backlog",
+        "deferred": "backlog", "parked": "backlog",
+    },
+    column_to_status={
+        "new": "new",
+        "inprogress": "in_progress",
+        "testing": "testing",
+        "done": "done",
+        "backlog": "parked",
+    },
+    file_re=re.compile(r"^(?P<id>(?:T|WD)-\d+[A-Za-z]?)_(?P<slug>.+)\.md$"),
+    default_column="backlog",
+    id_prefix="T",
+    extra_id_globs=("archive/**/T-*.md", "archive/**/WD-*.md"),
+    archive_find_globs=("archive/**/{id}_*.md",),
+    iter_glob="*.md",
+    excluded_names=frozenset({"INDEX.md", "README.md"}),
+    excluded_prefixes=("EXECUTION_PLAN_", "RUNBOOK_"),
+    source="github",
+    github_repo="NG-Bullseye/cortex",
+)
+
+
 # ---- Registry of named boards (single source — both tools import from here) --
 # `sync_md_to_todoist.py` and `archive_done_tickets.py` used to each carry their
 # own duplicate BOARDS dict; consolidated here so adding a board is exactly one
 # line, and argparse `choices=sorted(BOARDS)` stays in lockstep across tools.
 BOARDS: dict[str, BoardConfig] = {
     "cortex": CORTEX_BOARD,
+    "cortex-github": GITHUB_CORTEX_BOARD,
     "cerebellum": CEREBELLUM_BOARD,
     "maintenance": MAINTENANCE_BOARD,
 }

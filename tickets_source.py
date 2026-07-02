@@ -41,17 +41,22 @@ from config import CORTEX_BOARD, CORTEX_SCAN_BOARD
 from backend import MarkdownBackend
 
 
-# ---- Backend selection (T-2 Phase 2a) ---------------------------------------
-# BOARD_BACKEND=todoist|markdown, default markdown. NO live cutover here — the
-# default keeps the on-disk md projection. The scan board stays markdown-only
-# (Phase 2a only ports the cortex ticket board to Todoist). Module globals +
-# function signatures below are identical regardless of backend, so server.py /
-# api.py need no change.
+# ---- Backend selection (T-2 Phase 2a + T-182 GitHub SSOT) -------------------
+# BOARD_BACKEND=markdown|todoist|github, default github (GitHub Issues is SSOT
+# since 2026-07-02). Set BOARD_BACKEND=markdown for the legacy md-file backend.
+# Module globals + function signatures are identical regardless of backend, so
+# server.py / api.py need no change.
 def _make_board():
-    if os.environ.get("BOARD_BACKEND", "markdown").strip().lower() == "todoist":
+    backend = os.environ.get("BOARD_BACKEND", "github").strip().lower()
+    if backend == "markdown":
+        return MarkdownBackend(CORTEX_BOARD)
+    if backend == "todoist":
         from todoist_backend import TodoistBackend
         return TodoistBackend(CORTEX_BOARD)
-    return MarkdownBackend(CORTEX_BOARD)
+    # github (default) — GitHub Issues SSOT
+    from github_backend import GitHubBackend
+    from config import GITHUB_CORTEX_BOARD
+    return GitHubBackend(GITHUB_CORTEX_BOARD)
 
 
 # ---- Backend instances ------------------------------------------------------
