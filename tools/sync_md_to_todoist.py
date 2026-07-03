@@ -217,17 +217,15 @@ def sync(board_key: str, dry_run: bool, only: str | None) -> int:
         return 0
 
     # ---- real run -----------------------------------------------------------
+    # trashes FIRST: they free up project-item headroom before creates spend it.
+    # Reversed order used to hard-crash the whole run on
+    # MAX_ITEMS_LIMIT_REACHED (HTTP 403/49) as soon as a project was full,
+    # never reaching the trashes that would have freed the room (FBL-1).
     cl = backend._client
-    for col, card in creates:
-        _, md_title = backend._parse_id_title(card["title"])
-        tid = card["id"]
-        content = f"{tid} — {md_title}" if md_title else tid
-        cl.add_task(
-            content=content,
-            project_id=project_id,
-            section_id=sections[col],
-            description=_short_desc(card),
-        )
+    for task in trashes:
+        # delete_task on /api/v1 is a SOFT delete = moves to Todoist trash,
+        # recoverable by Leo; never a hard purge.
+        cl.delete_task(task["id"])
     for task, col_change, content_change, desc_change, want_desc in updates:
         fields: dict = {}
         if content_change is not None:
@@ -238,10 +236,16 @@ def sync(board_key: str, dry_run: bool, only: str | None) -> int:
             cl.update_task(task["id"], **fields)
         if col_change is not None:
             cl.move_task(task["id"], sections[col_change])
-    for task in trashes:
-        # delete_task on /api/v1 is a SOFT delete = moves to Todoist trash,
-        # recoverable by Leo; never a hard purge.
-        cl.delete_task(task["id"])
+    for col, card in creates:
+        _, md_title = backend._parse_id_title(card["title"])
+        tid = card["id"]
+        content = f"{tid} — {md_title}" if md_title else tid
+        cl.add_task(
+            content=content,
+            project_id=project_id,
+            section_id=sections[col],
+            description=_short_desc(card),
+        )
 
     print(f"--- DONE: created={len(creates)} updated={len(updates)} "
           f"trashed={len(trashes)} ---")
