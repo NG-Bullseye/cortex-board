@@ -69,6 +69,21 @@ def content_hash(title: str, body: str, status: str) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
+# ---- Lane filtering (T-251) -------------------------------------------------
+# CORTEX_B_BOARD (Lane B) and GITHUB_CORTEX_BOARD (Lane A) share one GitHub
+# Issues source (NG-Bullseye/cortex) but must land in different Todoist
+# projects (coding-agent-b vs cortex) and never both pick up the same issue.
+# `BoardConfig.title_tag` / `title_tag_exclude` (set per-board in config.py)
+# say which lane an issue belongs to purely by a title substring — no new
+# framework, just a filter applied once before either sync direction runs.
+def _issue_in_lane(cfg: BoardConfig, title: str) -> bool:
+    if cfg.title_tag is not None:
+        return cfg.title_tag in title
+    if cfg.title_tag_exclude is not None:
+        return cfg.title_tag_exclude not in title
+    return True
+
+
 # ---- Issue/Task helpers ----------------------------------------------------
 
 def issue_to_hash(issue: dict, column: str) -> str:
@@ -114,12 +129,12 @@ def sync_github_to_todoist(
         if tid:
             td_by_ticket_id[tid] = task
 
-    # Get all GitHub Issues
+    # Get all GitHub Issues, filtered to this board's lane (T-251)
     gh_issues = {i["number"]: i for i in gh_backend._cached_issues()}
     gh_by_id: dict[str, dict] = {}
     for issue in gh_issues.values():
         tid = gh_backend._match_id(issue.get("title", ""))
-        if tid:
+        if tid and _issue_in_lane(gh_backend.config, issue.get("title", "")):
             gh_by_id[tid] = issue
 
     # Direction 1: GitHub → Todoist
@@ -239,12 +254,12 @@ def sync_todoist_to_github(
     # Get Todoist tasks
     td_tasks = td_backend._client.list_tasks(project_id)
 
-    # Get GitHub Issues indexed by ticket ID
+    # Get GitHub Issues indexed by ticket ID, filtered to this board's lane
     gh_issues = {i["number"]: i for i in gh_backend._cached_issues()}
     gh_by_id: dict[str, dict] = {}
     for issue in gh_issues.values():
         tid = gh_backend._match_id(issue.get("title", ""))
-        if tid:
+        if tid and _issue_in_lane(gh_backend.config, issue.get("title", "")):
             gh_by_id[tid] = issue
 
     # Build reverse lookup: todoist_id → issue_number from state

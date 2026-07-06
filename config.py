@@ -66,6 +66,18 @@ class BoardConfig:
     # GitHub repo for source=="github" boards, e.g. "NG-Bullseye/cortex".
     github_repo: str | None = None
 
+    # ---- lane split (T-251) -------------------------------------------------
+    # Two boards can share one GitHub-Issues source (same github_repo) and
+    # split by a title substring — the existing `[cortex-b]` lane-tag
+    # convention (see cortex/CLAUDE.md: cortex-b only touches tickets tagged
+    # `[cortex-b]` in the title). `title_tag` = only sync issues whose title
+    # contains this substring (Lane B). `title_tag_exclude` = skip issues
+    # whose title contains this substring (Lane A, so it never re-syncs a
+    # Lane B ticket into its own Todoist project). At most one of the two is
+    # set per board; sync_github_todoist.py applies whichever is set.
+    title_tag: str | None = None
+    title_tag_exclude: str | None = None
+
     # ---- markdown format (shared across cortex boards, kept per-config so a
     #      future board can use a different format without touching the engine).
     # Postel — accept both the standard `**Status:** <val>` and the dash-list
@@ -120,6 +132,8 @@ CORTEX_BOARD = BoardConfig(
     iter_glob="*.md",
     excluded_names=frozenset({"INDEX.md", "README.md"}),
     excluded_prefixes=("EXECUTION_PLAN_", "RUNBOOK_"),
+    todoist_parent="boards",
+    todoist_project="coding-agent-a",
 )
 
 
@@ -144,6 +158,8 @@ CORTEX_SCAN_BOARD = BoardConfig(
     id_prefix="SC",
     reserved_ids=frozenset({"SC-00"}),  # SC-00 reserved for INDEX
     iter_glob="SC-*.md",
+    todoist_parent="boards",
+    todoist_project="cortex",
 )
 
 
@@ -259,6 +275,56 @@ GITHUB_CORTEX_BOARD = BoardConfig(
     excluded_prefixes=("EXECUTION_PLAN_", "RUNBOOK_"),
     source="github",
     github_repo="NG-Bullseye/cortex",
+    todoist_parent="boards",
+    todoist_project="cortex",
+    # Lane A: exclude Lane-B-tagged issues so this board never re-syncs a
+    # cortex-b ticket into its own Todoist project (see CORTEX_B_BOARD below).
+    title_tag_exclude="[cortex-b]",
+)
+
+
+# ---- Cortex-B board (Lane B — same GitHub Issues source as GITHUB_CORTEX_BOARD,
+#      filtered to tickets tagged `[cortex-b]` in the title) -----------------
+# cortex-b (Lane B implementer) only ever touches tickets whose title carries
+# the `[cortex-b]` tag (see cortex/CLAUDE.md § Rolle, "Zwei Lanes, ein Board").
+# This board shares GITHUB_CORTEX_BOARD's GitHub repo/columns/status
+# vocabulary one-to-one — it is the identical GitHub-Issues-as-source board,
+# just filtered by lane tag and projected into its own Todoist project
+# (T-251) so Lane A and Lane B tickets never collide in the same project.
+CORTEX_B_BOARD = BoardConfig(
+    tickets_dir=_TICKETS_DIR,  # kept for archive lookups during migration
+    columns=("backlog", "new", "inprogress", "testing", "done"),
+    status_to_column={
+        "new": "new", "open": "new", "🆕": "new",
+        "in_progress": "inprogress", "in-progress": "inprogress", "inprogress": "inprogress",
+        "🔄": "inprogress",
+        "testing": "testing", "🧪": "testing",
+        "done": "done", "closed": "done", "✅": "done", "🟢": "done",
+        "wont-do": "backlog", "wontdo": "backlog",
+        "hw-block": "backlog", "hwblock": "backlog", "blocked": "backlog",
+        "deferred": "backlog", "parked": "backlog",
+    },
+    column_to_status={
+        "new": "new",
+        "inprogress": "in_progress",
+        "testing": "testing",
+        "done": "done",
+        "backlog": "parked",
+    },
+    file_re=re.compile(r"^(?P<id>(?:T|WD)-\d+[A-Za-z]?)_(?P<slug>.+)\.md$"),
+    default_column="backlog",
+    id_prefix="T",
+    extra_id_globs=("archive/**/T-*.md", "archive/**/WD-*.md"),
+    archive_find_globs=("archive/**/{id}_*.md",),
+    iter_glob="*.md",
+    excluded_names=frozenset({"INDEX.md", "README.md"}),
+    excluded_prefixes=("EXECUTION_PLAN_", "RUNBOOK_"),
+    source="github",
+    github_repo="NG-Bullseye/cortex",
+    todoist_parent="boards",
+    todoist_project="coding-agent-b",
+    # Lane B: only sync issues tagged [cortex-b] in the title.
+    title_tag="[cortex-b]",
 )
 
 
@@ -314,6 +380,7 @@ MANAGER_BOARD = BoardConfig(
 BOARDS: dict[str, BoardConfig] = {
     "cortex": CORTEX_BOARD,
     "cortex-github": GITHUB_CORTEX_BOARD,
+    "cortex-b": CORTEX_B_BOARD,
     "cerebellum": CEREBELLUM_BOARD,
     "maintenance": MAINTENANCE_BOARD,
     "manager": MANAGER_BOARD,
