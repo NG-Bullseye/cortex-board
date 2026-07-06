@@ -35,3 +35,14 @@ Manager-Ref: MB-14
 Reine Konvention für menschliche/LLM-Lesbarkeit (Nachvollziehbarkeit der
 Kette beim Lesen einer Ticket-md) — kein Tool in diesem Repo parst, validiert
 oder erzwingt das Feld. Ein fehlender/falscher Back-Ref bricht nichts.
+
+## Sonderfall: `Cortex-Ref` (T-263, einmaliger Rückwärts-Backfill)
+
+Die MB-/CA-Stufen (T-260) wurden gebaut, nachdem bereits 35 T-Tickets auf dem
+Cortex-Board existierten. `Cortex-Ref: T-NN` markiert diese historischen
+Backfill-Kopien (`MB-01`…`MB-35`, angelegt via
+`tools/backfill_manager_board.py`) — Richtung ist umgekehrt zur normalen
+Konvention (zeigt VOM Manager-Board ZURÜCK auf ein bereits existierendes
+Cortex-Ticket, statt vom Kind auf den Elternteil, der es geschnitten hat).
+Einmaliger Vorgang, kein wiederkehrender Sync-Mechanismus; künftige MB-Tickets
+folgen wieder der normalen `Manager-Ref`/`Coding-Agent-Ref`-Kette.
