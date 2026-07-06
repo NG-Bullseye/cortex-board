@@ -40,6 +40,7 @@ EXCLUDED_PREFIXES = ("EXECUTION_PLAN_", "RUNBOOK_")
 SOURCE_FILE_RE = re.compile(r"^(?P<id>T-\d+[A-Za-z]?)_?.*\.md$")
 HEADING_RE = re.compile(r"^#\s+T-\d+[A-Za-z]?\s*[—–-]\s*(?P<title>.+?)\s*$", re.M)
 EXISTING_MB_RE = re.compile(r"^MB-(\d+)")
+CORTEX_REF_RE = re.compile(r"^Cortex-Ref:\s*(?P<id>T-\d+[A-Za-z]?)\s*$", re.M)
 
 
 def slugify(title: str) -> str:
@@ -70,6 +71,28 @@ def next_mb_start() -> int:
             if m:
                 highest = max(highest, int(m.group(1)))
     return highest + 1
+
+
+def already_migrated_sources() -> set[str]:
+    """T-NN ids that already have a migrated MB ticket, per `Cortex-Ref:` header.
+
+    WARUM: a re-run computes a FRESH sequential MB-NN start (next_mb_start()
+    just looks at the highest existing MB number), so the dest path for an
+    already-migrated T-ticket differs from what's already on disk — the
+    dest.exists() path check below never fires on a re-run and would happily
+    write 35 duplicate MB-36..MB-70 tickets for the same 35 T-sources. The
+    Cortex-Ref header is the only stable, content-based link back to the
+    source, so it's the authoritative dedup check; the path check stays as
+    a harmless extra safety net.
+    """
+    seen: set[str] = set()
+    if not MANAGER_TICKETS_DIR.exists():
+        return seen
+    for f in MANAGER_TICKETS_DIR.glob("MB-*.md"):
+        m = CORTEX_REF_RE.search(f.read_text())
+        if m:
+            seen.add(m.group("id"))
+    return seen
 
 
 def build_mb_ticket(source: Path, mb_id: str) -> tuple[str, str]:
@@ -112,17 +135,30 @@ def main() -> int:
         print("No source T-*.md tickets found — aborting.", file=sys.stderr)
         return 1
 
+    migrated = already_migrated_sources()
+    pending = []
+    for src in sources:
+        src_m = re.match(r"^(?P<id>T-\d+[A-Za-z]?)", src.name)
+        src_id = src_m.group("id") if src_m else src.stem
+        if src_id in migrated:
+            print(f"SKIP (already migrated, Cortex-Ref match): {src.name}", file=sys.stderr)
+            continue
+        pending.append(src)
+
     start = next_mb_start()
-    print(f"Found {len(sources)} source tickets. First new id: MB-{start:02d}")
+    print(f"Found {len(sources)} source tickets, {len(pending)} pending "
+          f"({len(sources) - len(pending)} already migrated). First new id: MB-{start:02d}")
 
     MANAGER_TICKETS_DIR.mkdir(parents=True, exist_ok=True)
 
     created = []
-    for i, src in enumerate(sources):
+    for i, src in enumerate(pending):
         mb_id = f"MB-{start + i:02d}"
         filename, content = build_mb_ticket(src, mb_id)
         dest = MANAGER_TICKETS_DIR / filename
         if dest.exists():
+            # Harmless extra safety net — see already_migrated_sources() WARUM
+            # for why this path check alone is insufficient on a re-run.
             print(f"SKIP (exists): {dest}", file=sys.stderr)
             continue
         if args.dry_run:
