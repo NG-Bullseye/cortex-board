@@ -1,51 +1,48 @@
 #!/usr/bin/env python3
 """
-RETIRED (T-251, 2026-07-06): this bidirectional GitHub<->Todoist mirror
-(project "cortex") is superseded by tools/sync_md_to_todoist.py, the
-one-way md->Todoist mirror (--board cortex -> "coding-agent-a",
---board cortex-b -> "coding-agent-b") which is now the approved SSOT
-mirror per Leo's "Todoist-Struktur ist SSOT" call.
+sync_github_todoist.py — GitHub Issues -> Todoist Sync (one-way).
+
+RETIRED-then-restructured (T-251 disabled it, T-257 removed the reverse
+direction from the code): this used to be a bidirectional GitHub<->Todoist
+mirror (project "cortex"). It is superseded in production by
+tools/sync_md_to_todoist.py, the one-way md->Todoist mirror (--board cortex
+-> "coding-agent-a", --board cortex-b -> "coding-agent-b"), which is the
+approved SSOT mirror per Leo's "Todoist-Struktur ist SSOT" call, and per
+T-257's binding directive that every board has exactly ONE local source and
+syncs in exactly ONE direction (local -> Todoist), no exceptions.
 
 Its systemd timer (sync-github-todoist.timer, every 5min) has been
-`systemctl --user disable --now`'d. Root-cause evidence for the retire:
-every single run since the timer last started (Jul 02 18:04, 1055/1055
-in journalctl) failed with HTTP 403 MAX_ITEMS_LIMIT_REACHED before ever
-persisting ~/.cache/board/github_todoist_sync.json — the reverse
-(Todoist-checkbox -> GitHub-close) path never successfully fired even
-once in the observable history. Meanwhile it kept creating tasks in a
+`systemctl --user disable --now`'d (T-251). Root-cause evidence for the
+retire: every single run since the timer last started (Jul 02 18:04,
+1055/1055 in journalctl) failed with HTTP 403 MAX_ITEMS_LIMIT_REACHED
+before ever persisting ~/.cache/board/github_todoist_sync.json — the old
+reverse (Todoist-checkbox -> GitHub-close) path never successfully fired
+even once in the observable history. Meanwhile it kept creating tasks in a
 separate Todoist project ("cortex") in parallel with sync_md_to_todoist's
-"coding-agent-a"/"coding-agent-b" projects, duplicating tickets
-(confirmed live: T-221 existed in both "cortex" and "coding-agent-a").
-That silent double-mirror is the likely root cause of the original
-Todoist chaos that led to T-251 in the first place.
+"coding-agent-a"/"coding-agent-b" projects, duplicating tickets (confirmed
+live: T-221 existed in both "cortex" and "coding-agent-a"). That silent
+double-mirror is the likely root cause of the original Todoist chaos that
+led to T-251 in the first place.
 
-Left in place (script + unit files) as a dormant reference only — do
-NOT re-enable without first fixing the MAX_ITEMS_LIMIT_REACHED loop and
-deciding how "cortex" project content should relate to coding-agent-a/b.
-The stale "cortex" Todoist project itself was left untouched (frozen
-snapshot, not deleted) — cleanup is a separate decision for Leo/coding-agent.
+T-257 removed `sync_todoist_to_github()` (the Todoist -> GitHub write-back:
+label edits, issue create/close/reopen) structurally, so re-enabling the
+timer can never reintroduce bidirectionality by accident — this script now
+can only read GitHub Issues and write Todoist tasks. Script + unit files
+stay in place as a dormant reference; the MAX_ITEMS_LIMIT_REACHED loop and
+the "cortex" project double-mirror still need a decision (Leo/coding-agent)
+before this is ever pointed at production again. The stale "cortex" Todoist
+project itself was left untouched (frozen snapshot, not deleted) — that's a
+Todoist-data decision, out of scope for this code change.
 
---- Original docstring below ---
-
-sync_github_todoist.py — Bidirectional GitHub Issues ↔ Todoist mirror.
-
-Replaces sync_md_to_todoist.py (md → Todoist, one-way). GitHub Issues are SSOT.
-Syncs both directions with loop prevention via content hashing.
-
-Direction 1 (GitHub → Todoist, primary):
+Direction (GitHub → Todoist, one-way):
     New/updated GitHub Issue → upsert Todoist task in the board project.
     Closed issue → complete Todoist task.
-
-Direction 2 (Todoist → GitHub, Leo's edits):
-    New Todoist task (without matching GitHub Issue) → create GitHub Issue.
-    Todoist task moved to different section → update GitHub Issue status label.
-    Todoist task completed → close GitHub Issue.
-
-Loop prevention: each synced item stores a content hash. If both sides changed
-since last sync, GitHub wins (SSOT). Items with matching hashes are skipped.
+    Todoist task with no matching open GitHub Issue → complete it (cleanup).
 
 Sync state: ~/.cache/board/github_todoist_sync.json
     {issue_number: {todoist_id, gh_hash, todoist_hash, last_sync}}
+    (todoist_hash is kept only as a bookkeeping field; nothing reads it to
+    drive a write back to GitHub anymore.)
 
 Usage:
     python tools/sync_github_todoist.py --dry-run
@@ -66,7 +63,7 @@ from typing import Optional
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from config import BOARDS, BoardConfig, GITHUB_CORTEX_BOARD
-from github_backend import GitHubBackend, STATUS_LABELS, LABEL_TO_COLUMN, _gh, _gh_json
+from github_backend import GitHubBackend
 from todoist_backend import TodoistBackend
 
 
@@ -264,145 +261,13 @@ def sync_github_to_todoist(
     return stats
 
 
-def sync_todoist_to_github(
-    gh_backend: GitHubBackend,
-    td_backend: TodoistBackend,
-    state: dict,
-    dry_run: bool = False,
-) -> dict:
-    """Pull Todoist changes → GitHub Issues (Leo's edits). Returns stats."""
-    stats = {"created": 0, "updated": 0, "closed": 0, "skipped": 0}
-
-    td_info = td_backend.provision()
-    project_id = td_info["project_id"]
-    sections = td_info["sections"]
-    section_to_col = {sid: col for col, sid in sections.items()}
-
-    # Get Todoist tasks
-    td_tasks = td_backend._client.list_tasks(project_id)
-
-    # Get GitHub Issues indexed by ticket ID, filtered to this board's lane
-    gh_issues = {i["number"]: i for i in gh_backend._cached_issues()}
-    gh_by_id: dict[str, dict] = {}
-    for issue in gh_issues.values():
-        tid = gh_backend._match_id(issue.get("title", ""))
-        if tid and _issue_in_lane(gh_backend.config, issue.get("title", "")):
-            gh_by_id[tid] = issue
-
-    # Build reverse lookup: todoist_id → issue_number from state
-    todoist_to_issue: dict[str, str] = {}
-    for issue_num, entry in state.items():
-        td_id = entry.get("todoist_id")
-        if td_id:
-            todoist_to_issue[td_id] = issue_num
-
-    for td_task in td_tasks:
-        tid, title = td_backend._parse_id_title(td_task.get("content", ""))
-        td_task_id = td_task["id"]
-
-        # Skip tasks without a ticket ID (non-board tasks)
-        if not tid:
-            continue
-
-        td_col = section_to_col.get(td_task.get("section_id"), "new")
-        td_hash = todoist_task_to_hash(td_task, td_col)
-
-        # Find previous state
-        issue_num = todoist_to_issue.get(td_task_id)
-        if not issue_num:
-            # Try to find by ticket ID directly
-            gh_issue = gh_by_id.get(tid)
-            if gh_issue:
-                issue_num = str(gh_issue["number"])
-
-        prev = state.get(issue_num, {}) if issue_num else {}
-        prev_td_hash = prev.get("todoist_hash", "")
-
-        # If Todoist didn't change since last sync, skip
-        if td_hash == prev_td_hash and prev_td_hash:
-            stats["skipped"] += 1
-            continue
-
-        gh_issue = gh_by_id.get(tid) if tid else None
-
-        if gh_issue:
-            # Update existing GitHub Issue
-            gh_col = gh_backend._status_column(gh_issue)
-
-            if td_col != gh_col:
-                # Status changed in Todoist → update GitHub label
-                new_label = STATUS_LABELS.get(td_col, STATUS_LABELS["new"])
-                old_label = gh_backend._current_status_label(gh_issue)
-                if not dry_run:
-                    args = ["issue", "edit", str(gh_issue["number"]),
-                            "--add-label", new_label]
-                    if old_label and old_label != new_label:
-                        args += ["--remove-label", old_label]
-                    _gh(*args, repo=gh_backend._repo)
-
-                    # Close/reopen based on Todoist completion
-                    if td_task.get("is_completed") and gh_issue.get("state") == "OPEN":
-                        _gh("issue", "close", str(gh_issue["number"]),
-                            repo=gh_backend._repo)
-                    elif not td_task.get("is_completed") and gh_issue.get("state") == "CLOSED":
-                        _gh("issue", "reopen", str(gh_issue["number"]),
-                            repo=gh_backend._repo)
-
-                stats["updated"] += 1
-                print(f"  GITHUB↑ {tid}: {gh_col} → {td_col}")
-            else:
-                stats["skipped"] += 1
-
-            # Update sync state
-            if issue_num:
-                state[issue_num] = {
-                    "todoist_id": td_task_id,
-                    "gh_hash": issue_to_hash(gh_issue, td_col),
-                    "todoist_hash": td_hash,
-                    "last_sync": time.time(),
-                }
-        else:
-            # No GitHub Issue exists → create one (Leo created task in Todoist)
-            if not dry_run:
-                if not title:
-                    title = td_task.get("content", tid)
-                body = td_task.get("description") or ""
-                if body:
-                    body = f"*(Created from Todoist by Leo)*\n\n{body}"
-                else:
-                    body = "*(Created from Todoist by Leo)*"
-
-                new_label = STATUS_LABELS.get(td_col, STATUS_LABELS["new"])
-
-                # Create the issue
-                url = _gh(
-                    "issue", "create",
-                    "--title", f"{tid} — {title}",
-                    "--body", body,
-                    "--label", new_label,
-                    repo=gh_backend._repo,
-                ).strip()
-                new_number = int(url.rstrip("/").split("/")[-1])
-
-                # If Todoist task is completed, close the issue
-                if td_task.get("is_completed"):
-                    _gh("issue", "close", str(new_number), repo=gh_backend._repo)
-
-                state[str(new_number)] = {
-                    "todoist_id": td_task_id,
-                    "gh_hash": content_hash(f"{tid} — {title}", body, td_col),
-                    "todoist_hash": td_hash,
-                    "last_sync": time.time(),
-                }
-
-            stats["created"] += 1
-            print(f"  GITHUB+ {tid}: created from Todoist → {td_col}")
-
-    return stats
-
-
 def sync(board_name: str = "cortex-github", dry_run: bool = False) -> dict:
-    """Run a full bidirectional sync. Returns combined stats."""
+    """Run a one-way GitHub -> Todoist sync (T-257: no reverse direction).
+
+    Returns stats. This never writes to GitHub Issues — see the module
+    docstring for why `sync_todoist_to_github()` was removed entirely
+    rather than merely left unused.
+    """
     cfg = BOARDS.get(board_name)
     if not cfg:
         print(f"Unknown board: {board_name}. Choices: {sorted(BOARDS)}")
@@ -415,23 +280,19 @@ def sync(board_name: str = "cortex-github", dry_run: bool = False) -> dict:
     print(f"State: {len(state)} tracked items")
 
     print("\n── GitHub → Todoist ──")
-    stats_gh = sync_github_to_todoist(gh_backend, td_backend, state, dry_run=dry_run)
-
-    print("\n── Todoist → GitHub ──")
-    stats_td = sync_todoist_to_github(gh_backend, td_backend, state, dry_run=dry_run)
+    stats = sync_github_to_todoist(gh_backend, td_backend, state, dry_run=dry_run)
 
     if not dry_run:
         save_state(state)
         print(f"\nState saved: {len(state)} items")
 
-    total = {**stats_gh, **stats_td}
-    total["total"] = sum(total.values())
-    return total
+    stats["total"] = sum(stats.values())
+    return stats
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Bidirectional GitHub Issues ↔ Todoist sync"
+        description="GitHub Issues -> Todoist sync (one-way, T-257)"
     )
     parser.add_argument("--dry-run", action="store_true", help="Preview only, no writes")
     parser.add_argument("--board", default="cortex-github",
@@ -440,13 +301,13 @@ def main():
     args = parser.parse_args()
 
     print(f"{'DRY RUN — ' if args.dry_run else ''}"
-          f"Syncing {args.board} (GitHub ↔ Todoist)\n")
+          f"Syncing {args.board} (GitHub → Todoist, one-way)\n")
 
     stats = sync(board_name=args.board, dry_run=args.dry_run)
 
     print(f"\nDone. created={stats.get('created',0)} updated={stats.get('updated',0)} "
-          f"completed={stats.get('completed',0)} closed={stats.get('closed',0)} "
-          f"skipped={stats.get('skipped',0)} total={stats.get('total',0)}")
+          f"completed={stats.get('completed',0)} skipped={stats.get('skipped',0)} "
+          f"total={stats.get('total',0)}")
 
 
 if __name__ == "__main__":
