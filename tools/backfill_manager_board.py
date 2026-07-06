@@ -1,46 +1,62 @@
 #!/usr/bin/env python3
-"""One-shot backfill (T-263): mirror every historical Cortex-board T-*.md ticket
-into the Manager-Board as MB-NN.md.
+"""Manager-Board <- GitHub-Issues backfill (T-263, scope-corrected).
 
-Context: the Manager-/Coding-Agent-Board stages (T-260) were built AFTER these
-35 T-tickets already existed on the Cortex board. Leo asked for a one-time
-historical backfill so the Manager board has visibility into that backlog too
-— NOT a recurring sync (the normal direction is Manager -> Coding-Agent ->
-Cortex, this script runs the mirror once, backwards, then is done).
+History: the first version of this script (T-263 v1) mirrored the 35
+historical Cortex-board T-*.md tickets into MB-01..MB-35 with a
+`Cortex-Ref: T-NN` back-ref, all stamped `backlog`. coding-agent then found
+the real SSOT is not that local md directory but the GitHub Issues in
+`NG-Bullseye/cortex` (T-NN AND WD-NN prefixes share one board there) — 303
+issues total, ~197 open / ~106 closed. This version generalizes the source to
+GitHub Issues and fixes two things the v1 backfill got wrong:
 
-Strictly additive: reads ~/cortex/docs/tickets/T-*.md (skips INDEX.md,
-README.md, EXECUTION_PLAN_*, RUNBOOK_*, and anything under archive/), never
-touches the source ticket. For each source ticket, writes a NEW
-MB-NN_<slug>.md into ~/repos/project-manager-agent/docs/tickets/ with:
-  - fresh sequential MB-NN id (starting after the highest existing MB id, 0 today)
-  - `# MB-NN — <original title, incl. any [cortex-b] lane tag>` heading
-  - `Cortex-Ref: T-NN` back-ref header line (reverse-direction special case,
-    see docs/board-chain-refs.md)
-  - `**Status:** backlog` (Manager board always receives these as fresh backlog
-    items regardless of the original Cortex-side status — Leo/manager decide
-    from there whether/how to re-triage)
-  - the original ticket's body verbatim below the header (no rewrording/cuts)
+  1. The 35 already-migrated MB tickets are DEDUPED by title-matching their
+     `Cortex-Ref: T-NN` header against the GitHub issue title (which embeds
+     the same `T-NN` token) -- no duplicate MB ticket is created for them.
+     Their status is corrected to match the *real* GitHub issue state (8 of
+     them are actually CLOSED on GitHub despite v1 stamping everything
+     `backlog`), and a `GitHub-Ref: #NNN` line is added alongside the existing
+     `Cortex-Ref: T-NN` so future runs can dedup off the single GitHub-Ref key
+     like every other ticket.
+  2. Every remaining GitHub issue (open or closed, T-NN or WD-NN, ~268 today)
+     gets a new MB-NN ticket: `GitHub-Ref: #NNN` back-ref (see
+     docs/board-chain-refs.md "Sonderfall: GitHub-Ref"), `**Status:** new` for
+     OPEN issues / `done` for CLOSED, body = the issue body verbatim. (`new`,
+     not `backlog` -- MANAGER_BOARD already has a dedicated `new` column in
+     the shared status vocabulary; `backlog` is reserved for deferred/parked.)
 
-Run once, from repo root:
+Idempotent: the single dedup key across every MB-*.md file is `GitHub-Ref:
+#NNN`. A re-run only touches status lines that drifted (issue closed since
+last run) and never re-creates or duplicates a ticket.
+
+Run once from repo root:
     python3 tools/backfill_manager_board.py [--dry-run]
+
+Requires `gh` authenticated against NG-Bullseye/cortex.
 """
 from __future__ import annotations
 
 import argparse
+import json
+import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 
-CORTEX_TICKETS_DIR = Path.home() / "cortex" / "docs" / "tickets"
-MANAGER_TICKETS_DIR = Path.home() / "repos" / "project-manager-agent" / "docs" / "tickets"
+REPO = "NG-Bullseye/cortex"
+# Overridable so a worktree checkout of project-manager-agent (recommended when
+# the shared live checkout has foreign uncommitted WIP, see T-263 v2 report)
+# can be targeted without touching the primary working tree.
+MANAGER_TICKETS_DIR = Path(
+    os.environ.get("MANAGER_TICKETS_DIR")
+    or (Path.home() / "repos" / "project-manager-agent" / "docs" / "tickets")
+)
 
-EXCLUDED_NAMES = {"INDEX.md", "README.md"}
-EXCLUDED_PREFIXES = ("EXECUTION_PLAN_", "RUNBOOK_")
-
-SOURCE_FILE_RE = re.compile(r"^(?P<id>T-\d+[A-Za-z]?)_?.*\.md$")
-HEADING_RE = re.compile(r"^#\s+T-\d+[A-Za-z]?\s*[—–-]\s*(?P<title>.+?)\s*$", re.M)
 EXISTING_MB_RE = re.compile(r"^MB-(\d+)")
 CORTEX_REF_RE = re.compile(r"^Cortex-Ref:\s*(?P<id>T-\d+[A-Za-z]?)\s*$", re.M)
+GITHUB_REF_RE = re.compile(r"^GitHub-Ref:\s*#(?P<num>\d+)\s*$", re.M)
+STATUS_RE = re.compile(r"^\*\*Status:\*\*\s*(?P<status>\S+)\s*$", re.M)
+TITLE_TID_RE = re.compile(r"\b(T-\d+|WD-\d+)\b")
 
 
 def slugify(title: str) -> str:
@@ -50,76 +66,41 @@ def slugify(title: str) -> str:
     return s[:60] or "ticket"
 
 
-def iter_source_tickets() -> list[Path]:
-    out = []
-    for f in sorted(CORTEX_TICKETS_DIR.glob("T-*.md")):
-        if f.name in EXCLUDED_NAMES:
-            continue
-        if any(f.name.startswith(p) for p in EXCLUDED_PREFIXES):
-            continue
-        if not SOURCE_FILE_RE.match(f.name):
-            continue
-        out.append(f)
-    return out
+def fetch_issues() -> list[dict]:
+    out = subprocess.run(
+        [
+            "gh", "issue", "list", "--repo", REPO, "--state", "all",
+            "--limit", "500", "--json", "number,title,state,body",
+        ],
+        check=True, capture_output=True, text=True,
+    ).stdout
+    return json.loads(out)
 
 
-def next_mb_start() -> int:
+def existing_mb_files() -> list[Path]:
+    if not MANAGER_TICKETS_DIR.exists():
+        return []
+    return sorted(MANAGER_TICKETS_DIR.glob("MB-*.md"))
+
+
+def next_mb_start(files: list[Path]) -> int:
     highest = 0
-    if MANAGER_TICKETS_DIR.exists():
-        for f in MANAGER_TICKETS_DIR.glob("MB-*.md"):
-            m = EXISTING_MB_RE.match(f.name)
-            if m:
-                highest = max(highest, int(m.group(1)))
+    for f in files:
+        m = EXISTING_MB_RE.match(f.name)
+        if m:
+            highest = max(highest, int(m.group(1)))
     return highest + 1
 
 
-def already_migrated_sources() -> set[str]:
-    """T-NN ids that already have a migrated MB ticket, per `Cortex-Ref:` header.
-
-    WARUM: a re-run computes a FRESH sequential MB-NN start (next_mb_start()
-    just looks at the highest existing MB number), so the dest path for an
-    already-migrated T-ticket differs from what's already on disk — the
-    dest.exists() path check below never fires on a re-run and would happily
-    write 35 duplicate MB-36..MB-70 tickets for the same 35 T-sources. The
-    Cortex-Ref header is the only stable, content-based link back to the
-    source, so it's the authoritative dedup check; the path check stays as
-    a harmless extra safety net.
-    """
-    seen: set[str] = set()
-    if not MANAGER_TICKETS_DIR.exists():
-        return seen
-    for f in MANAGER_TICKETS_DIR.glob("MB-*.md"):
-        m = CORTEX_REF_RE.search(f.read_text())
-        if m:
-            seen.add(m.group("id"))
-    return seen
-
-
-def build_mb_ticket(source: Path, mb_id: str) -> tuple[str, str]:
-    """Returns (filename, content) for the new MB ticket."""
-    text = source.read_text()
-    m = re.match(r"^(?P<id>T-\d+[A-Za-z]?)", source.name)
-    src_id = m.group("id") if m else source.stem
-
-    heading_m = HEADING_RE.search(text)
-    title = heading_m.group("title") if heading_m else source.stem
-
-    body = text
-    if heading_m:
-        # drop the original heading line; we replace it with our own MB heading
-        body = text[heading_m.end():].lstrip("\n")
-    # Drop the ORIGINAL Status line too — we stamp our own `**Status:** backlog`
-    # right after the Cortex-Ref header; keeping both would leave two
-    # `**Status:**` lines in one file (parser takes the first = ours, but it's
-    # confusing to a human reader and looks like a doubled field).
-    body = re.sub(r"^\*\*Status:\*\*[^\n]*\n?", "", body, count=1, flags=re.M)
-
-    new_heading = f"# {mb_id} — {title}"
+def build_new_ticket(mb_id: str, issue: dict) -> tuple[str, str]:
+    title = issue["title"]
+    status = "done" if issue["state"] == "CLOSED" else "new"
+    body = (issue.get("body") or "").strip() or "_(kein Issue-Body)_"
     content = (
-        f"{new_heading}\n\n"
-        f"Cortex-Ref: {src_id}\n"
-        f"**Status:** backlog\n\n"
-        f"{body}"
+        f"# {mb_id} — {title}\n\n"
+        f"GitHub-Ref: #{issue['number']}\n"
+        f"**Status:** {status}\n\n"
+        f"{body}\n"
     )
     filename = f"{mb_id}_{slugify(title)}.md"
     return filename, content
@@ -130,46 +111,94 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true")
     args = ap.parse_args()
 
-    sources = iter_source_tickets()
-    if not sources:
-        print("No source T-*.md tickets found — aborting.", file=sys.stderr)
-        return 1
+    issues = fetch_issues()
+    title_map: dict[str, dict] = {}
+    for it in issues:
+        m = TITLE_TID_RE.search(it["title"])
+        if m:
+            title_map[m.group(1)] = it
+    print(f"Fetched {len(issues)} GitHub issues from {REPO} "
+          f"({sum(1 for i in issues if i['state']=='OPEN')} open / "
+          f"{sum(1 for i in issues if i['state']=='CLOSED')} closed).",
+          file=sys.stderr)
 
-    migrated = already_migrated_sources()
-    pending = []
-    for src in sources:
-        src_m = re.match(r"^(?P<id>T-\d+[A-Za-z]?)", src.name)
-        src_id = src_m.group("id") if src_m else src.stem
-        if src_id in migrated:
-            print(f"SKIP (already migrated, Cortex-Ref match): {src.name}", file=sys.stderr)
-            continue
-        pending.append(src)
+    files = existing_mb_files()
 
-    start = next_mb_start()
-    print(f"Found {len(sources)} source tickets, {len(pending)} pending "
-          f"({len(sources) - len(pending)} already migrated). First new id: MB-{start:02d}")
+    covered_issue_nums: set[int] = set()
+    status_fixes = []  # (path, old_status, new_status, issue_number)
+
+    for f in files:
+        text = f.read_text()
+        gh_m = GITHUB_REF_RE.search(text)
+        issue = None
+        new_text = text
+
+        if gh_m:
+            issue_num = int(gh_m.group("num"))
+            issue = next((it for it in issues if it["number"] == issue_num), None)
+            if issue is None:
+                print(f"WARN: GitHub-Ref #{issue_num} in {f.name} not found among "
+                      f"fetched issues (deleted/renumbered?)", file=sys.stderr)
+                covered_issue_nums.add(issue_num)
+                continue
+        else:
+            cr_m = CORTEX_REF_RE.search(text)
+            if not cr_m:
+                continue
+            tid = cr_m.group("id")
+            issue = title_map.get(tid)
+            if not issue:
+                print(f"WARN: no GitHub issue title-matches {tid} for {f.name}", file=sys.stderr)
+                continue
+            # add GitHub-Ref right after the Cortex-Ref line for future-proof dedup
+            new_text = new_text.replace(
+                cr_m.group(0), f"{cr_m.group(0)}\nGitHub-Ref: #{issue['number']}", 1
+            )
+
+        covered_issue_nums.add(issue["number"])
+        real_status = "done" if issue["state"] == "CLOSED" else "new"
+        st_m = STATUS_RE.search(text)
+        cur_status = st_m.group("status") if st_m else None
+        if cur_status != real_status:
+            new_text = STATUS_RE.sub(f"**Status:** {real_status}", new_text, count=1)
+            status_fixes.append((f, cur_status, real_status, issue["number"]))
+        if new_text != text:
+            if args.dry_run:
+                print(f"WOULD UPDATE: {f.name} (status {cur_status} -> {real_status}, "
+                      f"GitHub-Ref #{issue['number']})")
+            else:
+                f.write_text(new_text)
+                print(f"UPDATED: {f.name} (status {cur_status} -> {real_status}, "
+                      f"GitHub-Ref #{issue['number']})")
+
+    pending_issues = [it for it in issues if it["number"] not in covered_issue_nums]
+    start = next_mb_start(files)
+    print(f"\n{len(covered_issue_nums)} issues already covered by existing MB tickets, "
+          f"{len(pending_issues)} pending new tickets. First new id: MB-{start:02d}",
+          file=sys.stderr)
 
     MANAGER_TICKETS_DIR.mkdir(parents=True, exist_ok=True)
-
     created = []
-    for i, src in enumerate(pending):
+    for i, issue in enumerate(pending_issues):
         mb_id = f"MB-{start + i:02d}"
-        filename, content = build_mb_ticket(src, mb_id)
+        filename, content = build_new_ticket(mb_id, issue)
         dest = MANAGER_TICKETS_DIR / filename
         if dest.exists():
-            # Harmless extra safety net — see already_migrated_sources() WARUM
-            # for why this path check alone is insufficient on a re-run.
             print(f"SKIP (exists): {dest}", file=sys.stderr)
             continue
         if args.dry_run:
-            print(f"WOULD WRITE: {dest}  <- {src.name}")
+            print(f"WOULD WRITE: {dest}  <- issue #{issue['number']}")
         else:
             dest.write_text(content)
-            print(f"WROTE: {dest}  <- {src.name}")
+            print(f"WROTE: {dest}  <- issue #{issue['number']}")
         created.append(dest)
 
-    print(f"\n{'Would create' if args.dry_run else 'Created'} {len(created)} MB tickets "
-          f"from {len(sources)} source tickets.")
+    print(f"\n{'Would fix' if args.dry_run else 'Fixed'} {len(status_fixes)} status "
+          f"mismatches on existing tickets.")
+    for f, old, new, num in status_fixes:
+        print(f"  {f.name}: {old} -> {new} (issue #{num})")
+    print(f"{'Would create' if args.dry_run else 'Created'} {len(created)} new MB tickets "
+          f"from {len(issues)} total GitHub issues.")
     return 0
 
 
