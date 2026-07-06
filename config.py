@@ -262,6 +262,51 @@ GITHUB_CORTEX_BOARD = BoardConfig(
 )
 
 
+# ---- Manager board (project-manager-agent/docs/tickets, MB-NN ids) ---------
+# The Manager (project-manager-agent, Leo's direct-facing agent) writes tickets
+# for tasks Leo hands it directly (T-246), before it delegates them onward to
+# coding-agent/cortex — its own step in the Leo -> Manager -> Cortex-Board ->
+# Cortex/Cortex-B ticket-handoff chain (see project-manager-agent/docs/
+# plan-manager-board.md). Same markdown format + same status vocabulary as
+# CORTEX_BOARD (reused one-to-one, no new column/status logic). Projected into
+# Todoist as a sibling sub-project `manager` under the same `boards` parent.
+_MANAGER_TICKETS_DIR = Path(os.environ.get(
+    "MANAGER_TICKETS_DIR",
+    Path.home() / "repos" / "project-manager-agent" / "docs" / "tickets",
+))
+
+MANAGER_BOARD = BoardConfig(
+    tickets_dir=_MANAGER_TICKETS_DIR,
+    columns=("backlog", "new", "inprogress", "testing", "done"),
+    status_to_column={
+        "new": "new", "open": "new", "🆕": "new",
+        "in_progress": "inprogress", "in-progress": "inprogress", "inprogress": "inprogress",
+        "🔄": "inprogress",
+        "testing": "testing", "🧪": "testing",
+        "done": "done", "closed": "done", "✅": "done", "🟢": "done",
+        "wont-do": "backlog", "wontdo": "backlog",
+        "hw-block": "backlog", "hwblock": "backlog", "blocked": "backlog",
+        "deferred": "backlog", "parked": "backlog",
+    },
+    column_to_status={
+        "new": "new",
+        "inprogress": "in_progress",
+        "testing": "testing",
+        "done": "done",
+        "backlog": "parked",
+    },
+    file_re=re.compile(r"^(?P<id>MB-\d+[A-Za-z]?)_(?P<slug>.+)\.md$"),
+    default_column="backlog",
+    id_prefix="MB",
+    extra_id_globs=("archive/**/MB-*.md",),
+    archive_find_globs=("archive/**/{id}_*.md",),
+    iter_glob="MB-*.md",
+    excluded_names=frozenset({"INDEX.md", "README.md"}),
+    todoist_parent="boards",
+    todoist_project="manager",
+)
+
+
 # ---- Registry of named boards (single source — both tools import from here) --
 # `sync_md_to_todoist.py` and `archive_done_tickets.py` used to each carry their
 # own duplicate BOARDS dict; consolidated here so adding a board is exactly one
@@ -271,4 +316,5 @@ BOARDS: dict[str, BoardConfig] = {
     "cortex-github": GITHUB_CORTEX_BOARD,
     "cerebellum": CEREBELLUM_BOARD,
     "maintenance": MAINTENANCE_BOARD,
+    "manager": MANAGER_BOARD,
 }
