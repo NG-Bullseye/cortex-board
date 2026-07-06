@@ -143,6 +143,15 @@ CORTEX_BOARD = BoardConfig(
 
 
 # ---- SYSTEMSCANN board (docs/scan-tickets) ----------------------------------
+# PARKED, NOT WIRED TO PRODUCTION (T-257 audit): no systemd unit and no
+# `BOARDS` entry references this config — it exists only as a fully-formed
+# BoardConfig for whenever ~/cortex/docs/scan-tickets (SC-NN findings from
+# SYSTEMSCANN.md probes) gets a Todoist mirror. Structurally it would be a
+# clean one-way md->Todoist sync like CORTEX_BOARD if ever activated (same
+# `sync_md_to_todoist.py` engine, no reverse-write path exists to add). Its
+# `todoist_project="cortex"` target is itself a stale/orphaned Todoist
+# project (see docs/T-255_todoist_bestandsaufnahme.md Befund 3) — do not
+# wire this up without first deciding what "cortex" should hold.
 CORTEX_SCAN_BOARD = BoardConfig(
     tickets_dir=_SCAN_TICKETS_DIR,
     columns=("new", "open", "resolved"),
