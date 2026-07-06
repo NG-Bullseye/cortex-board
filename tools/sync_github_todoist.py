@@ -1,5 +1,32 @@
 #!/usr/bin/env python3
 """
+RETIRED (T-251, 2026-07-06): this bidirectional GitHub<->Todoist mirror
+(project "cortex") is superseded by tools/sync_md_to_todoist.py, the
+one-way md->Todoist mirror (--board cortex -> "coding-agent-a",
+--board cortex-b -> "coding-agent-b") which is now the approved SSOT
+mirror per Leo's "Todoist-Struktur ist SSOT" call.
+
+Its systemd timer (sync-github-todoist.timer, every 5min) has been
+`systemctl --user disable --now`'d. Root-cause evidence for the retire:
+every single run since the timer last started (Jul 02 18:04, 1055/1055
+in journalctl) failed with HTTP 403 MAX_ITEMS_LIMIT_REACHED before ever
+persisting ~/.cache/board/github_todoist_sync.json — the reverse
+(Todoist-checkbox -> GitHub-close) path never successfully fired even
+once in the observable history. Meanwhile it kept creating tasks in a
+separate Todoist project ("cortex") in parallel with sync_md_to_todoist's
+"coding-agent-a"/"coding-agent-b" projects, duplicating tickets
+(confirmed live: T-221 existed in both "cortex" and "coding-agent-a").
+That silent double-mirror is the likely root cause of the original
+Todoist chaos that led to T-251 in the first place.
+
+Left in place (script + unit files) as a dormant reference only — do
+NOT re-enable without first fixing the MAX_ITEMS_LIMIT_REACHED loop and
+deciding how "cortex" project content should relate to coding-agent-a/b.
+The stale "cortex" Todoist project itself was left untouched (frozen
+snapshot, not deleted) — cleanup is a separate decision for Leo/coding-agent.
+
+--- Original docstring below ---
+
 sync_github_todoist.py — Bidirectional GitHub Issues ↔ Todoist mirror.
 
 Replaces sync_md_to_todoist.py (md → Todoist, one-way). GitHub Issues are SSOT.
@@ -69,6 +96,21 @@ def content_hash(title: str, body: str, status: str) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:16]
 
 
+# ---- Lane filtering (T-251) -------------------------------------------------
+# CORTEX_B_BOARD (Lane B) and GITHUB_CORTEX_BOARD (Lane A) share one GitHub
+# Issues source (NG-Bullseye/cortex) but must land in different Todoist
+# projects (coding-agent-b vs cortex) and never both pick up the same issue.
+# `BoardConfig.title_tag` / `title_tag_exclude` (set per-board in config.py)
+# say which lane an issue belongs to purely by a title substring — no new
+# framework, just a filter applied once before either sync direction runs.
+def _issue_in_lane(cfg: BoardConfig, title: str) -> bool:
+    if cfg.title_tag is not None:
+        return cfg.title_tag in title
+    if cfg.title_tag_exclude is not None:
+        return cfg.title_tag_exclude not in title
+    return True
+
+
 # ---- Issue/Task helpers ----------------------------------------------------
 
 def issue_to_hash(issue: dict, column: str) -> str:
@@ -114,12 +156,12 @@ def sync_github_to_todoist(
         if tid:
             td_by_ticket_id[tid] = task
 
-    # Get all GitHub Issues
+    # Get all GitHub Issues, filtered to this board's lane (T-251)
     gh_issues = {i["number"]: i for i in gh_backend._cached_issues()}
     gh_by_id: dict[str, dict] = {}
     for issue in gh_issues.values():
         tid = gh_backend._match_id(issue.get("title", ""))
-        if tid:
+        if tid and _issue_in_lane(gh_backend.config, issue.get("title", "")):
             gh_by_id[tid] = issue
 
     # Direction 1: GitHub → Todoist
@@ -239,12 +281,12 @@ def sync_todoist_to_github(
     # Get Todoist tasks
     td_tasks = td_backend._client.list_tasks(project_id)
 
-    # Get GitHub Issues indexed by ticket ID
+    # Get GitHub Issues indexed by ticket ID, filtered to this board's lane
     gh_issues = {i["number"]: i for i in gh_backend._cached_issues()}
     gh_by_id: dict[str, dict] = {}
     for issue in gh_issues.values():
         tid = gh_backend._match_id(issue.get("title", ""))
-        if tid:
+        if tid and _issue_in_lane(gh_backend.config, issue.get("title", "")):
             gh_by_id[tid] = issue
 
     # Build reverse lookup: todoist_id → issue_number from state
