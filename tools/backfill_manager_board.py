@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Manager-Board <- GitHub-Issues backfill (T-263, scope-corrected).
+"""Manager-Board <- GitHub-Issues backfill (T-263, scope-corrected, round 4).
 
 History: the first version of this script (T-263 v1) mirrored the 35
 historical Cortex-board T-*.md tickets into MB-01..MB-35 with a
@@ -19,14 +19,18 @@ GitHub Issues and fixes two things the v1 backfill got wrong:
      like every other ticket.
   2. Every remaining GitHub issue (open or closed, T-NN or WD-NN, ~268 today)
      gets a new MB-NN ticket: `GitHub-Ref: #NNN` back-ref (see
-     docs/board-chain-refs.md "Sonderfall: GitHub-Ref"), `**Status:** new` for
-     OPEN issues / `done` for CLOSED, body = the issue body verbatim. (`new`,
-     not `backlog` -- MANAGER_BOARD already has a dedicated `new` column in
-     the shared status vocabulary; `backlog` is reserved for deferred/parked.)
+     docs/board-chain-refs.md "Sonderfall: GitHub-Ref"), body = the issue body
+     verbatim, status per `status_for_issue()`:
+       - CLOSED               -> `done`
+       - OPEN, in MOVED_TO_MANAGER_ONLY (23 tickets Leo confirmed round 4,
+         removed from the Cortex board, exist only here now) -> `new`
+       - OPEN, everything else (~174) -> `backlog` (still live on the Cortex
+         board too; this MB copy is awareness only, not a fresh-intake item)
 
 Idempotent: the single dedup key across every MB-*.md file is `GitHub-Ref:
 #NNN`. A re-run only touches status lines that drifted (issue closed since
-last run) and never re-creates or duplicates a ticket.
+last run, or the moved-only set changes) and never re-creates or duplicates
+a ticket.
 
 Run once from repo root:
     python3 tools/backfill_manager_board.py [--dry-run]
@@ -44,6 +48,20 @@ import sys
 from pathlib import Path
 
 REPO = "NG-Bullseye/cortex"
+
+# T-263 round 4 (Leo-bestätigt): these 23 T-tickets were removed from the
+# Cortex board (~/cortex/docs/tickets/) because they were unbearbeitete
+# GitHub-only neuanlagen never delegated to cortex — they now exist ONLY on
+# the Manager board, so they alone get `new` (Manager board's dedicated
+# fresh-ticket column). Every OTHER still-open GitHub issue keeps its T-/WD-
+# ticket alive on the Cortex board too and gets `backlog` here instead (it's
+# already tracked live elsewhere, this MB copy is just visibility/awareness).
+# Closed issues are unaffected (`done` regardless of this set).
+MOVED_TO_MANAGER_ONLY = {
+    "T-186", "T-187", "T-188", "T-190", "T-191", "T-192", "T-193", "T-198",
+    "T-199", "T-200", "T-201", "T-202", "T-203", "T-204", "T-205", "T-206",
+    "T-207", "T-209", "T-210", "T-211", "T-212", "T-214", "T-216",
+}
 # Overridable so a worktree checkout of project-manager-agent (recommended when
 # the shared live checkout has foreign uncommitted WIP, see T-263 v2 report)
 # can be targeted without touching the primary working tree.
@@ -92,9 +110,19 @@ def next_mb_start(files: list[Path]) -> int:
     return highest + 1
 
 
+def status_for_issue(issue: dict) -> str:
+    """`done` for CLOSED, `new` only for the 23 moved-only tickets, else `backlog`."""
+    if issue["state"] == "CLOSED":
+        return "done"
+    m = TITLE_TID_RE.search(issue["title"])
+    if m and m.group(1) in MOVED_TO_MANAGER_ONLY:
+        return "new"
+    return "backlog"
+
+
 def build_new_ticket(mb_id: str, issue: dict) -> tuple[str, str]:
     title = issue["title"]
-    status = "done" if issue["state"] == "CLOSED" else "new"
+    status = status_for_issue(issue)
     body = (issue.get("body") or "").strip() or "_(kein Issue-Body)_"
     content = (
         f"# {mb_id} — {title}\n\n"
@@ -156,7 +184,7 @@ def main() -> int:
             )
 
         covered_issue_nums.add(issue["number"])
-        real_status = "done" if issue["state"] == "CLOSED" else "new"
+        real_status = status_for_issue(issue)
         st_m = STATUS_RE.search(text)
         cur_status = st_m.group("status") if st_m else None
         if cur_status != real_status:
