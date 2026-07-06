@@ -134,6 +134,11 @@ CORTEX_BOARD = BoardConfig(
     excluded_prefixes=("EXECUTION_PLAN_", "RUNBOOK_"),
     todoist_parent="boards",
     todoist_project="coding-agent-a",
+    # Lane A (T-251 review-fix): exclude Lane-B-tagged tickets so the daily
+    # markdown mirror (sync_md_to_todoist.py, production's live systemd timer)
+    # stops re-syncing [cortex-b] tickets into coding-agent-a. Mirrors
+    # GITHUB_CORTEX_BOARD's identical exclude below, for the markdown path.
+    title_tag_exclude="[cortex-b]",
 )
 
 
@@ -283,15 +288,18 @@ GITHUB_CORTEX_BOARD = BoardConfig(
 )
 
 
-# ---- Cortex-B board (Lane B — same GitHub Issues source as GITHUB_CORTEX_BOARD,
-#      filtered to tickets tagged `[cortex-b]` in the title) -----------------
-# cortex-b (Lane B implementer) only ever touches tickets whose title carries
-# the `[cortex-b]` tag (see cortex/CLAUDE.md § Rolle, "Zwei Lanes, ein Board").
-# This board shares GITHUB_CORTEX_BOARD's GitHub repo/columns/status
-# vocabulary one-to-one — it is the identical GitHub-Issues-as-source board,
-# just filtered by lane tag and projected into its own Todoist project
-# (T-251) so Lane A and Lane B tickets never collide in the same project.
-CORTEX_B_BOARD = BoardConfig(
+# ---- GitHub-backed Cortex-B board (Lane B — same GitHub Issues source as
+#      GITHUB_CORTEX_BOARD, filtered to tickets tagged `[cortex-b]`) --------
+# NOT YET WIRED TO PRODUCTION (T-251 review-fix): the live
+# sync-github-todoist.timer (every 5min) invokes sync_github_todoist.py with
+# no --board arg, i.e. only the default "cortex-github" (Lane A). Nothing
+# in production runs `--board cortex-b` against this github-sourced config
+# today — it's a ready-but-dormant board for whenever the GitHub-Issues-SSOT
+# migration goes live for Lane B too. Keep the name distinct from the
+# markdown-sourced `CORTEX_B_BOARD` below (the one production's
+# sync_md_to_todoist.py / maintenance-board-mirror.timer actually uses) so
+# "CORTEX_B_BOARD" unambiguously means "what production runs".
+GITHUB_CORTEX_B_BOARD = BoardConfig(
     tickets_dir=_TICKETS_DIR,  # kept for archive lookups during migration
     columns=("backlog", "new", "inprogress", "testing", "done"),
     status_to_column={
@@ -324,6 +332,51 @@ CORTEX_B_BOARD = BoardConfig(
     todoist_parent="boards",
     todoist_project="coding-agent-b",
     # Lane B: only sync issues tagged [cortex-b] in the title.
+    title_tag="[cortex-b]",
+)
+
+
+# ---- Cortex-B board (Lane B — markdown source, PRODUCTION) -----------------
+# What production's sync_md_to_todoist.py / maintenance-board-mirror.timer
+# actually run for Lane B (T-251 review-fix). Lane B tickets are NOT a
+# separate directory — cortex-b works the SAME docs/tickets markdown files
+# as Lane A, distinguished only by a `[cortex-b]` tag in the title (see
+# ~/cortex/CLAUDE.md § Rolle: cortex-b only touches tickets tagged
+# `[cortex-b]`). So this reuses CORTEX_BOARD's tickets_dir/file_re/columns/
+# status vocabulary byte-for-byte, just filtered by `title_tag` and
+# projected into its own Todoist project (coding-agent-b) so Lane A/B never
+# collide in the same project.
+CORTEX_B_BOARD = BoardConfig(
+    tickets_dir=_TICKETS_DIR,
+    columns=("backlog", "new", "inprogress", "testing", "done"),
+    status_to_column={
+        "new": "new", "open": "new", "🆕": "new",
+        "in_progress": "inprogress", "in-progress": "inprogress", "inprogress": "inprogress",
+        "🔄": "inprogress",
+        "testing": "testing", "🧪": "testing",
+        "done": "done", "closed": "done", "✅": "done", "🟢": "done",
+        "wont-do": "backlog", "wontdo": "backlog",
+        "hw-block": "backlog", "hwblock": "backlog", "blocked": "backlog",
+        "deferred": "backlog", "parked": "backlog",
+    },
+    column_to_status={
+        "new": "new",
+        "inprogress": "in_progress",
+        "testing": "testing",
+        "done": "done",
+        "backlog": "parked",
+    },
+    file_re=re.compile(r"^(?P<id>(?:T|WD)-\d+[A-Za-z]?)_(?P<slug>.+)\.md$"),
+    default_column="backlog",
+    id_prefix="T",
+    extra_id_globs=("archive/**/T-*.md",),
+    archive_find_globs=("archive/**/{id}_*.md",),
+    iter_glob="*.md",
+    excluded_names=frozenset({"INDEX.md", "README.md"}),
+    excluded_prefixes=("EXECUTION_PLAN_", "RUNBOOK_"),
+    todoist_parent="boards",
+    todoist_project="coding-agent-b",
+    # Lane B: only sync tickets tagged [cortex-b] in the title.
     title_tag="[cortex-b]",
 )
 
@@ -381,6 +434,7 @@ BOARDS: dict[str, BoardConfig] = {
     "cortex": CORTEX_BOARD,
     "cortex-github": GITHUB_CORTEX_BOARD,
     "cortex-b": CORTEX_B_BOARD,
+    "cortex-b-github": GITHUB_CORTEX_B_BOARD,
     "cerebellum": CEREBELLUM_BOARD,
     "maintenance": MAINTENANCE_BOARD,
     "manager": MANAGER_BOARD,

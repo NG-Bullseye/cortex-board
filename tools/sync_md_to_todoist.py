@@ -87,6 +87,18 @@ def _active_columns(cfg: BoardConfig) -> tuple[str, ...]:
     return tuple(c for c in cfg.columns if c != "done")
 
 
+# ---- Lane filtering (T-251 review-fix) -------------------------------------
+# Mirrors sync_github_todoist.py's `_issue_in_lane` substring-check verbatim —
+# CORTEX_BOARD (Lane A) and CORTEX_B_BOARD (Lane B) share the same markdown
+# tickets_dir, split only by a `[cortex-b]` title tag (see config.py, T-251).
+def _card_in_lane(cfg: BoardConfig, title: str) -> bool:
+    if cfg.title_tag is not None:
+        return cfg.title_tag in title
+    if cfg.title_tag_exclude is not None:
+        return cfg.title_tag_exclude not in title
+    return True
+
+
 def _short_desc(card: dict) -> str:
     """The slim mirror description for Todoist: the md backend's own
     `_extract_description` summary (first non-metadata paragraph, single line,
@@ -111,6 +123,8 @@ def build_plan(board_cfg, backend: TodoistBackend, only: str | None):
     md_by_id: dict[str, tuple[str, dict]] = {}
     for col in active_columns:
         for card in board.get(col, {}).get("tickets", []):
+            if not _card_in_lane(board_cfg, card["title"]):
+                continue
             tid, _ = backend._parse_id_title(card["title"])
             if not tid:
                 tid = card["id"]
