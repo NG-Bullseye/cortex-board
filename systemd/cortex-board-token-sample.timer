@@ -1,0 +1,10 @@
+[Unit]
+Description=Cortex-Board Token-Usage Sampler — 2h-Raster (trifft 05:00 + 07:00)
+
+[Timer]
+OnCalendar=*-*-* 01,03,05,07,09,11,13,15,17,19,21,23:00:00
+AccuracySec=2min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,9 @@
+[Unit]
+Description=Cortex-Board Token-Usage Sampler — oneshot per timer (T-287)
+Documentation=file:///home/leona/repos/cortex-board/token_usage.py
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /home/leona/repos/cortex-board/tools/sample_token_usage.py
+WorkingDirectory=/home/leona/repos/cortex-board
+TimeoutStartSec=2min
