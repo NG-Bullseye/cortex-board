@@ -1,0 +1,73 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title class="header-title">
+      <span class="logo">&#9638;</span> TOKEN MONITORING
+    </ion-title>
+    <ion-buttons slot="end">
+      <ion-button class="tbtn" routerLink="/board">BOARD</ion-button>
+      <ion-button class="tbtn" routerLink="/home">NABU</ion-button>
+      <ion-button class="tbtn" routerLink="/docs">DOCS</ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+
+  <div class="board-error" *ngIf="error">{{ error }}</div>
+
+  <div class="section-header">
+    <span class="section-title">CLAUDE-CLI TOKEN-VERBRAUCH // 2H-RASTER (01,03,05,07,...,23 LOKAL)</span>
+    <span class="entity-count" *ngIf="lastRefresh">UPD {{ lastRefresh | date:'HH:mm:ss' }}</span>
+  </div>
+
+  <div class="chart-wrap" *ngIf="samples.length > 0">
+    <svg [attr.viewBox]="'0 0 ' + chartW + ' ' + chartH" preserveAspectRatio="xMidYMid meet" class="chart-svg">
+      <!-- grid -->
+      <g *ngFor="let g of gridLines">
+        <line [attr.x1]="56" [attr.x2]="chartW - 12" [attr.y1]="g.y" [attr.y2]="g.y" class="grid-line"></line>
+        <text [attr.x]="4" [attr.y]="g.y + 3" class="grid-label">{{ g.label }}</text>
+      </g>
+      <!-- x labels -->
+      <g *ngFor="let xl of xLabels">
+        <text [attr.x]="xl.x" [attr.y]="chartH - 8" class="x-label" text-anchor="middle">{{ xl.label }}</text>
+      </g>
+      <!-- lines -->
+      <g *ngFor="let ln of chartLines">
+        <path *ngIf="ln.visible" [attr.d]="ln.path" [attr.stroke]="ln.color" class="chart-line"></path>
+        <circle *ngFor="let p of ln.points" [style.display]="ln.visible ? 'block' : 'none'"
+                [attr.cx]="p.x" [attr.cy]="p.y" r="2.5" [attr.fill]="ln.color">
+          <title>{{ ln.label }} · {{ hhmm(p.ts) }} · {{ fmtTokens(p.value) }} tok</title>
+        </circle>
+      </g>
+    </svg>
+  </div>
+
+  <div class="empty-state" *ngIf="samples.length === 0 && !loading">
+    Noch keine Samples -- cortex-board-token-sample.timer läuft alle 2h (01/03/05/07/.../23 lokal),
+    der erste Punkt erscheint nach dem nächsten Tick.
+  </div>
+
+  <!-- Legend / toggles -->
+  <div class="legend">
+    <button class="legend-chip" *ngFor="let ln of chartLines"
+            [class.dim]="!ln.visible"
+            [style.--chip-color]="ln.color"
+            (click)="toggleLine(ln.key)">
+      <span class="legend-swatch" [style.background]="ln.color"></span>
+      <span class="legend-label">{{ ln.label }}</span>
+      <span class="legend-value">{{ fmtTokens(ln.latest) }}</span>
+    </button>
+  </div>
+
+  <!-- Documented blind spots / mapping notes (T-287) -->
+  <div class="section-header">
+    <span class="section-title">MAPPING-NOTIZEN</span>
+  </div>
+  <div class="notes">
+    <div class="note-row" *ngFor="let ln of chartLines" [hidden]="!ln.note">
+      <span class="note-key" [style.color]="ln.color">{{ ln.label }}</span>
+      <span class="note-text">{{ ln.note }}</span>
+    </div>
+  </div>
+
+</ion-content>

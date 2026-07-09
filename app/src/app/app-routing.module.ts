@@ -15,6 +15,10 @@ const routes: Routes = [
     loadChildren: () => import('./docs/docs.module').then( m => m.DocsPageModule)
   },
   {
+    path: 'monitoring',
+    loadChildren: () => import('./monitoring/monitoring.module').then( m => m.MonitoringPageModule)
+  },
+  {
     path: '',
     redirectTo: 'board',
     pathMatch: 'full'
