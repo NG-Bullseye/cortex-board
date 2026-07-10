@@ -231,6 +231,18 @@ class TodoistBackend(BoardBackend):
         # becomes resolvable alongside the per-column sections.
         sections.update(cfg.todoist_extra_sections)
 
+        # T-303: release-gate section — unlike `todoist_extra_sections` this
+        # one has no pre-existing hand-created id, so it's auto-provisioned by
+        # name exactly like a per-column section (idempotent: reused by name
+        # on every later call once it exists).
+        if cfg.release_pending_section:
+            name = cfg.release_pending_section
+            sid = existing.get(name)
+            if sid is None:
+                sid = cl.add_section(name, project_id)["id"]
+                existing[name] = sid
+            sections[name] = sid
+
         self._project_id = project_id
         self._sections = sections
         return {"project_id": project_id, "sections": sections}

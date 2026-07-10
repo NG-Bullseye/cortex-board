@@ -135,6 +135,24 @@ class MarkdownBackend(BoardBackend):
             return ""
         return m.group(1).strip().lower()
 
+    # T-303: free-text `Release: <value>` line — the release-gate marker
+    # project-manager-agent's manager board writes (Phase 1 Capture lands a
+    # ticket with `Release: pending`; Phase 2, only on Leo's explicit
+    # "schick los/mach", project-manager-agent flips the line — the value
+    # `released` or simply removing the line entirely both mean "go"). Opt-in
+    # by design (mirrors T-297's provenance default): missing/malformed/any
+    # other value normalizes to "not pending" so every ticket predating this
+    # marker (and every non-MANAGER_BOARD board, which never sets
+    # `release_pending_section`) keeps flowing byte-identically — only a
+    # ticket explicitly tagged `Release: pending` is held back.
+    _RELEASE_RE = re.compile(r"^[ \t]*Release\s*:\s*(\S+)", re.M)
+
+    def _parse_release_pending(self, text: str) -> bool:
+        m = self._RELEASE_RE.search(text)
+        if not m:
+            return False
+        return m.group(1).strip().lower() == "pending"
+
     @staticmethod
     def _extract_description(text: str, max_len: int = 260) -> str:
         """First non-metadata, non-heading paragraph after the H1."""
@@ -197,6 +215,7 @@ class MarkdownBackend(BoardBackend):
         column = self.config.status_to_column.get(raw_status, self.config.default_column)
         desc = self._extract_description(text)
         provenance = self._parse_provenance(text)
+        release_pending = self._parse_release_pending(text)
         display_title = f"{tid} — {title}" if title else tid
         return {
             "id": tid or fid,
@@ -205,6 +224,7 @@ class MarkdownBackend(BoardBackend):
             "next_step": "",
             "status_raw": raw_status,
             "provenance": provenance,
+            "release_pending": release_pending,
             "column": column,
             "path": str(path),
         }
@@ -246,6 +266,10 @@ class MarkdownBackend(BoardBackend):
                 # only consumed by sync_md_to_todoist's provenance routing
                 # (boards without `provenance_section` ignore it entirely).
                 "provenance": t["provenance"],
+                # T-303: release-gate marker (`Release: pending` -> True) —
+                # only consumed by sync_md_to_todoist's release routing
+                # (boards without `release_pending_section` ignore it).
+                "release_pending": t["release_pending"],
             })
         out: dict = {"columns": list(cfg.columns), "source": str(cfg.tickets_dir)}
         for c in cfg.columns:
