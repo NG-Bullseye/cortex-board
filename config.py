@@ -96,12 +96,14 @@ class BoardConfig:
 
     # ---- release-gate routing (T-303) ----------------------------------------
     # MANAGER_BOARD-only concern, orthogonal to the provenance axis above: a
-    # ticket carrying `Release: pending` (project-manager-agent's Phase-1
-    # Capture marker — see backend.py `_parse_release_pending`) is held out of
-    # its normal status-column/provenance routing entirely and pinned to this
-    # fixed section instead, so it never reaches coding-agent's pipeline view
-    # before Leo's explicit "schick los". Once project-manager-agent flips/
-    # removes the marker (Phase 2 Release, on Leo's command), the ticket falls
+    # ticket carrying `**Status:** wartet-auf-freigabe` (project-manager-agent's
+    # Phase-1 Capture marker, written into the existing Status line by
+    # bin/release_gate.py — see backend.py `_parse_release_pending`) is held
+    # out of its normal status-column/provenance routing entirely and pinned
+    # to this fixed section instead, so it never reaches coding-agent's
+    # pipeline view before Leo's explicit "schick los". Once
+    # project-manager-agent flips the Status line to `freigegeben (<ts>)`
+    # (Phase 2 Release, on Leo's command), the ticket falls
     # back through to its normal target (provenance routing if the board has
     # `provenance_section`, else its status column) on the next sync. Checked
     # *before* provenance in `_target_section` — the release gate wins even for
@@ -471,8 +473,9 @@ MANAGER_BOARD = BoardConfig(
     # malformed Provenance) routes to this fixed pre-existing section instead.
     todoist_extra_sections={"maintainance": "6h4fX65xc9JhrCGX"},
     provenance_section="maintainance",
-    # T-303: Phase-1-Capture tickets (`Release: pending`) are held here until
-    # project-manager-agent flips the marker on Leo's explicit release command.
+    # T-303: Phase-1-Capture tickets (`**Status:** wartet-auf-freigabe`) are
+    # held here until project-manager-agent flips the Status line to
+    # `freigegeben (<ts>)` on Leo's explicit release command.
     release_pending_section="wartet auf Freigabe",
 )
 
