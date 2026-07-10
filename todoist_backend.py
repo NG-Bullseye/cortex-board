@@ -224,6 +224,13 @@ class TodoistBackend(BoardBackend):
                 existing[col] = sid
             sections[col] = sid
 
+        # T-297: fixed pre-existing Section IDs (e.g. MANAGER_BOARD's
+        # "maintainance") — merged in verbatim, never created/looked-up by
+        # name; provision() is the only place callers get a {name: id} map,
+        # so this is where sync_md_to_todoist's provenance routing target
+        # becomes resolvable alongside the per-column sections.
+        sections.update(cfg.todoist_extra_sections)
+
         self._project_id = project_id
         self._sections = sections
         return {"project_id": project_id, "sections": sections}

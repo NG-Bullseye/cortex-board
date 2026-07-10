@@ -122,6 +122,19 @@ class MarkdownBackend(BoardBackend):
         raw = re.sub(r"[(),.\[\]]+$", "", raw)
         return raw.lower()
 
+    # T-297: free-text `Provenance: <value>` line, plain (no `**bold**`) — the
+    # convention project-manager-agent's manager board writes for tickets Leo
+    # asked for directly (`leo-direct`). Missing/malformed lines and any other
+    # value normalize to "" — callers treat that as "not leo-direct" (default
+    # self-generated), never raise.
+    _PROVENANCE_RE = re.compile(r"^[ \t]*Provenance\s*:\s*(\S+)", re.M)
+
+    def _parse_provenance(self, text: str) -> str:
+        m = self._PROVENANCE_RE.search(text)
+        if not m:
+            return ""
+        return m.group(1).strip().lower()
+
     @staticmethod
     def _extract_description(text: str, max_len: int = 260) -> str:
         """First non-metadata, non-heading paragraph after the H1."""
@@ -183,6 +196,7 @@ class MarkdownBackend(BoardBackend):
         raw_status = self._parse_status(text)
         column = self.config.status_to_column.get(raw_status, self.config.default_column)
         desc = self._extract_description(text)
+        provenance = self._parse_provenance(text)
         display_title = f"{tid} — {title}" if title else tid
         return {
             "id": tid or fid,
@@ -190,6 +204,7 @@ class MarkdownBackend(BoardBackend):
             "description": desc,
             "next_step": "",
             "status_raw": raw_status,
+            "provenance": provenance,
             "column": column,
             "path": str(path),
         }
@@ -227,6 +242,10 @@ class MarkdownBackend(BoardBackend):
                 "title": t["title"],
                 "description": t["description"],
                 "next_step": t["next_step"],
+                # T-297: raw `Provenance:` value ("" if absent/malformed) —
+                # only consumed by sync_md_to_todoist's provenance routing
+                # (boards without `provenance_section` ignore it entirely).
+                "provenance": t["provenance"],
             })
         out: dict = {"columns": list(cfg.columns), "source": str(cfg.tickets_dir)}
         for c in cfg.columns:
