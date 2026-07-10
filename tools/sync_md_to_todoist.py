@@ -102,7 +102,18 @@ def _card_in_lane(cfg: BoardConfig, title: str) -> bool:
 # ---- Provenance-based section routing (T-297, MANAGER_BOARD-only) ----------
 # Only boards with `provenance_section` set opt in; every other board keeps
 # routing straight to its status column, byte-identical to before T-297.
+#
+# T-303 adds an orthogonal release-gate axis, checked FIRST: a ticket carrying
+# `**Status:** wartet-auf-freigabe` (project-manager-agent's Phase-1 Capture
+# marker, written into the existing Status line by bin/release_gate.py) is
+# pinned to `release_pending_section` regardless of provenance/status — even a
+# `Provenance: leo-direct` ticket is held back until Leo's explicit release
+# flips the Status line to `freigegeben (<ts>)`. Boards without
+# `release_pending_section` set (every board except MANAGER_BOARD) ignore
+# `release_pending` entirely, byte-identical to before T-303.
 def _target_section(board_cfg: BoardConfig, card: dict, col: str) -> str:
+    if board_cfg.release_pending_section and card.get("release_pending"):
+        return board_cfg.release_pending_section
     if not board_cfg.provenance_section:
         return col
     prov = (card.get("provenance") or "").strip().lower()
@@ -185,9 +196,11 @@ def build_plan(board_cfg, backend: TodoistBackend, only: str | None):
         want_desc = new_desc
         content_change = new_content if cur_content != new_content else None
         desc_change = want_desc if (cur_desc.strip() != want_desc or cur_next) else None
-        # section move? (status column change OR a provenance flip, e.g. a
-        # ticket someone added a `Provenance: leo-direct` line to — same
-        # mechanism as a status move, so it's idempotent and never duplicates)
+        # section move? (status column change, a provenance flip, e.g. a
+        # ticket someone added a `Provenance: leo-direct` line to, OR a T-303
+        # release flip, e.g. Status went `wartet-auf-freigabe` -> `freigegeben`
+        # — same mechanism as a status move, so it's idempotent and never
+        # duplicates)
         cur_col = sec_to_col.get(task.get("section_id"))
         col_change = target_col if cur_col != target_col else None
         if content_change is None and desc_change is None and col_change is None:

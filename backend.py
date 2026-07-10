@@ -135,6 +135,23 @@ class MarkdownBackend(BoardBackend):
             return ""
         return m.group(1).strip().lower()
 
+    # T-303: release-gate marker — NOT a separate freetext field. Aligned to
+    # project-manager-agent's actual implementation (bin/release_gate.py,
+    # PR#11): it writes the *existing* `**Status:**` line, same one
+    # `_parse_status` already parses. Phase 1 (capture) sets
+    # `**Status:** wartet-auf-freigabe`; Phase 2 (release, only on Leo's
+    # explicit "schick los"/"mach") stamps
+    # `**Status:** freigegeben (<ISO timestamp>)` — `_parse_status`'s
+    # `status_line_re` already stops the captured value at the first
+    # whitespace/`(`, so the timestamp never leaks into the comparison. Opt-in
+    # by design (mirrors T-297's provenance default): every other status
+    # value (incl. every ticket predating this marker, and every
+    # non-MANAGER_BOARD board, which never sets `release_pending_section`)
+    # normalizes to "not pending" — only a ticket explicitly tagged
+    # `wartet-auf-freigabe` is held back.
+    def _parse_release_pending(self, raw_status: str) -> bool:
+        return raw_status.startswith("wartet-auf-freigabe")
+
     @staticmethod
     def _extract_description(text: str, max_len: int = 260) -> str:
         """First non-metadata, non-heading paragraph after the H1."""
@@ -197,6 +214,7 @@ class MarkdownBackend(BoardBackend):
         column = self.config.status_to_column.get(raw_status, self.config.default_column)
         desc = self._extract_description(text)
         provenance = self._parse_provenance(text)
+        release_pending = self._parse_release_pending(raw_status)
         display_title = f"{tid} — {title}" if title else tid
         return {
             "id": tid or fid,
@@ -205,6 +223,7 @@ class MarkdownBackend(BoardBackend):
             "next_step": "",
             "status_raw": raw_status,
             "provenance": provenance,
+            "release_pending": release_pending,
             "column": column,
             "path": str(path),
         }
@@ -246,6 +265,10 @@ class MarkdownBackend(BoardBackend):
                 # only consumed by sync_md_to_todoist's provenance routing
                 # (boards without `provenance_section` ignore it entirely).
                 "provenance": t["provenance"],
+                # T-303: release-gate marker (`**Status:** wartet-auf-freigabe`
+                # -> True) — only consumed by sync_md_to_todoist's release
+                # routing (boards without `release_pending_section` ignore it).
+                "release_pending": t["release_pending"],
             })
         out: dict = {"columns": list(cfg.columns), "source": str(cfg.tickets_dir)}
         for c in cfg.columns:
