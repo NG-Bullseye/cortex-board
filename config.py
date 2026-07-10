@@ -78,6 +78,22 @@ class BoardConfig:
     title_tag: str | None = None
     title_tag_exclude: str | None = None
 
+    # ---- provenance-based Todoist routing (T-297) ---------------------------
+    # MANAGER_BOARD-only concern: Leo's Todoist inbox mixes his ~8 direct asks
+    # with ~200 self-generated backfill/maintenance tickets. A ticket carrying
+    # a free-text `Provenance: leo-direct` line still syncs to its normal
+    # status-column section (today's behaviour); anything else (missing line,
+    # malformed, or any other value incl. `self`) is routed to a single fixed
+    # "maintainance" section instead, regardless of status column, so it never
+    # lands in Leo's status-driven view. `todoist_extra_sections` are Section
+    # IDs that already exist in Todoist (created by hand, e.g. via the app) —
+    # `provision()` merges them into the resolved section map verbatim, it
+    # never creates/renames them. `provenance_section` names which of those
+    # extra sections is the "not leo-direct" catch-all; None (every other
+    # board) keeps sync_md_to_todoist's routing byte-identical to before.
+    todoist_extra_sections: dict[str, str] = field(default_factory=dict)
+    provenance_section: str | None = None
+
     # ---- markdown format (shared across cortex boards, kept per-config so a
     #      future board can use a different format without touching the engine).
     # Postel — accept both the standard `**Status:** <val>` and the dash-list
@@ -432,6 +448,11 @@ MANAGER_BOARD = BoardConfig(
     excluded_names=frozenset({"INDEX.md", "README.md"}),
     todoist_parent="boards",
     todoist_project="manager",
+    # T-297: leo-direct tickets keep syncing to their status column; every
+    # other ticket (self-generated backfill/maintenance, incl. missing/
+    # malformed Provenance) routes to this fixed pre-existing section instead.
+    todoist_extra_sections={"maintainance": "6h4fX65xc9JhrCGX"},
+    provenance_section="maintainance",
 )
 
 

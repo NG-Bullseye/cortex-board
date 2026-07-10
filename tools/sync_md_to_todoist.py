@@ -99,6 +99,18 @@ def _card_in_lane(cfg: BoardConfig, title: str) -> bool:
     return True
 
 
+# ---- Provenance-based section routing (T-297, MANAGER_BOARD-only) ----------
+# Only boards with `provenance_section` set opt in; every other board keeps
+# routing straight to its status column, byte-identical to before T-297.
+def _target_section(board_cfg: BoardConfig, card: dict, col: str) -> str:
+    if not board_cfg.provenance_section:
+        return col
+    prov = (card.get("provenance") or "").strip().lower()
+    if prov == "leo-direct":
+        return col
+    return board_cfg.provenance_section  # "self", missing, or any other value
+
+
 def _short_desc(card: dict) -> str:
     """The slim mirror description for Todoist: the md backend's own
     `_extract_description` summary (first non-metadata paragraph, single line,
@@ -152,13 +164,17 @@ def build_plan(board_cfg, backend: TodoistBackend, only: str | None):
         if tid not in md_by_id:
             continue
         col, card = md_by_id[tid]
+        # T-297: the *routing* target may differ from the status column when
+        # the board opts into provenance routing (MANAGER_BOARD only) — every
+        # other board's `target_col` is just `col`, unchanged.
+        target_col = _target_section(board_cfg, card, col)
         _, md_title = backend._parse_id_title(card["title"])
         new_content = f"{tid} — {md_title}" if md_title else tid
         new_desc = _short_desc(card)
 
         task = todoist_by_id.get(tid)
         if task is None:
-            creates.append((col, card))
+            creates.append((target_col, card))
             continue
 
         # field-level diff -> only write what changed (idempotency)
@@ -169,9 +185,11 @@ def build_plan(board_cfg, backend: TodoistBackend, only: str | None):
         want_desc = new_desc
         content_change = new_content if cur_content != new_content else None
         desc_change = want_desc if (cur_desc.strip() != want_desc or cur_next) else None
-        # section move?
+        # section move? (status column change OR a provenance flip, e.g. a
+        # ticket someone added a `Provenance: leo-direct` line to — same
+        # mechanism as a status move, so it's idempotent and never duplicates)
         cur_col = sec_to_col.get(task.get("section_id"))
-        col_change = col if cur_col != col else None
+        col_change = target_col if cur_col != target_col else None
         if content_change is None and desc_change is None and col_change is None:
             continue
         updates.append((task, col_change, content_change, desc_change, want_desc))
