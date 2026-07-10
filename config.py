@@ -297,12 +297,26 @@ MAINTENANCE_BOARD = BoardConfig(
 # lagging mirror during migration and eventually an archive.
 GITHUB_CORTEX_BOARD = BoardConfig(
     tickets_dir=_TICKETS_DIR,  # kept for archive lookups during migration
-    columns=("backlog", "new", "inprogress", "testing", "done"),
+    # T-313: two review gates added around the build itself —
+    # ready-for-plan-review sits BEFORE inprogress (a lane parks a drafted
+    # plan here and waits for coding-agent's go-ahead before writing code;
+    # "BEVOR gebaut wird" per the ticket, so it belongs before the build
+    # column, not after it) and ready-for-review sits AFTER testing/BEFORE
+    # done (finished + self-tested implementation waiting on code review
+    # pre-merge). Order here is display-only (read_board/read_column/
+    # move_ticket only check membership in cfg.columns, see github_backend.py
+    # / backend.py / todoist_backend.py) but is kept flow-shaped for the UI.
+    columns=(
+        "backlog", "new", "ready-for-plan-review", "inprogress",
+        "testing", "ready-for-review", "done",
+    ),
     status_to_column={
         "new": "new", "open": "new", "🆕": "new",
+        "ready-for-plan-review": "ready-for-plan-review",
         "in_progress": "inprogress", "in-progress": "inprogress", "inprogress": "inprogress",
         "🔄": "inprogress",
         "testing": "testing", "🧪": "testing",
+        "ready-for-review": "ready-for-review",
         "done": "done", "closed": "done", "✅": "done", "🟢": "done",
         "wont-do": "backlog", "wontdo": "backlog",
         "hw-block": "backlog", "hwblock": "backlog", "blocked": "backlog",
@@ -310,8 +324,10 @@ GITHUB_CORTEX_BOARD = BoardConfig(
     },
     column_to_status={
         "new": "new",
+        "ready-for-plan-review": "ready-for-plan-review",
         "inprogress": "in_progress",
         "testing": "testing",
+        "ready-for-review": "ready-for-review",
         "done": "done",
         "backlog": "parked",
     },
@@ -346,12 +362,22 @@ GITHUB_CORTEX_BOARD = BoardConfig(
 # "CORTEX_B_BOARD" unambiguously means "what production runs".
 GITHUB_CORTEX_B_BOARD = BoardConfig(
     tickets_dir=_TICKETS_DIR,  # kept for archive lookups during migration
-    columns=("backlog", "new", "inprogress", "testing", "done"),
+    # T-313: same two review-gate columns as GITHUB_CORTEX_BOARD (see the
+    # comment there for the before-inprogress / after-testing reasoning) —
+    # Lane B shares the same GitHub Issues + status:* label vocabulary, so
+    # the column set must stay identical or an issue moved between lanes'
+    # views would silently fall back to default_column.
+    columns=(
+        "backlog", "new", "ready-for-plan-review", "inprogress",
+        "testing", "ready-for-review", "done",
+    ),
     status_to_column={
         "new": "new", "open": "new", "🆕": "new",
+        "ready-for-plan-review": "ready-for-plan-review",
         "in_progress": "inprogress", "in-progress": "inprogress", "inprogress": "inprogress",
         "🔄": "inprogress",
         "testing": "testing", "🧪": "testing",
+        "ready-for-review": "ready-for-review",
         "done": "done", "closed": "done", "✅": "done", "🟢": "done",
         "wont-do": "backlog", "wontdo": "backlog",
         "hw-block": "backlog", "hwblock": "backlog", "blocked": "backlog",
@@ -359,8 +385,10 @@ GITHUB_CORTEX_B_BOARD = BoardConfig(
     },
     column_to_status={
         "new": "new",
+        "ready-for-plan-review": "ready-for-plan-review",
         "inprogress": "in_progress",
         "testing": "testing",
+        "ready-for-review": "ready-for-review",
         "done": "done",
         "backlog": "parked",
     },

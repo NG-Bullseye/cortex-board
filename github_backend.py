@@ -38,8 +38,14 @@ def _rev(tickets: list[dict]) -> str:
 # adds/removes them on move. Existing labels (WD, bug, layer-*, …) pass through.
 STATUS_LABELS = {
     "new": "status:new",
+    # T-313: plan-review gate before the build starts, and code-review gate
+    # after it finishes (before merge). Labels already exist on
+    # NG-Bullseye/cortex (created out-of-band for #617) — _ensure_status_labels
+    # is idempotent either way.
+    "ready-for-plan-review": "status:ready-for-plan-review",
     "inprogress": "status:in_progress",
     "testing": "status:testing",
+    "ready-for-review": "status:ready-for-review",
     "done": "status:done",
     "backlog": "status:parked",
 }
