@@ -298,12 +298,20 @@ class GitHubBackend:
             if col not in cfg.columns:
                 col = cfg.default_column
             desc, nxt = self._split_desc(issue.get("body", "") or "")
+            # Truncate for board view: full body available via gh issue view.
+            # Board must stay token-lean — 530 tickets × 200 chars = ~100KB, not ~800KB.
+            desc_short = (desc or self._extract_description(issue.get("body", "") or ""))
+            if len(desc_short) > 200:
+                desc_short = desc_short[:197] + "…"
+            nxt_short = (nxt or "")
+            if len(nxt_short) > 120:
+                nxt_short = nxt_short[:117] + "…"
             display_title = f"{tid} — {title}" if title else tid
             buckets[col].append({
                 "id": tid,
                 "title": display_title,
-                "description": desc or self._extract_description(issue.get("body", "")),
-                "next_step": nxt,
+                "description": desc_short,
+                "next_step": nxt_short,
             })
         for c in buckets:
             buckets[c].sort(key=lambda x: x["id"])
