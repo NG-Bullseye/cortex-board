@@ -20,7 +20,7 @@ files, every write edits one `.md` file.
 ## Layout
 
 - `tickets_source.py` — parse + project the board from the ticket `.md` files
-- `server.py` — MCP face for Claude (registered in `~/.claude.json` as `board`, stdio)
+- `server.py` — MCP face for Claude (stdio; not registered in `~/.claude.json` as of 2026-09-15)
 - `api.py` — REST face + serves the built app at the same origin (systemd `--user` unit `cortex-board-api`, port 8930)
 - `app/` — the Ionic/Angular/Capacitor app; `cd app && npm install && npm run build` → `app/www`
 
