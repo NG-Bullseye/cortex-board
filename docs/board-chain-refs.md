@@ -10,7 +10,7 @@ nie ein Move — jede Stufe behält ihre eigene Ticket-Historie.
 |---|---|---|---|---|---|
 | 1 | `manager` | `MB` | `~/repos/project-manager-agent/docs/tickets/` | manager | coding-agent |
 | 2 | `coding-agent` | `CA` | `~/repos/coding-agent/docs/tickets/` | coding-agent | cortex/cortex-b |
-| 3 | `cortex`/`cortex-b` | `T`/`WD` | `~/cortex/docs/tickets/` | cortex/cortex-b | (Leo/watchdog) |
+| 3 | `cortex`/`cortex-b` | `T` | `~/cortex/docs/tickets/` | cortex/cortex-b | (Leo/watchdog) |
 
 Alle drei teilen dieselbe Status-Vokabel/Spalten (`backlog/new/inprogress/
 testing/done`) und denselben Markdown-Parser (`config.BoardConfig`,
@@ -21,7 +21,9 @@ Beim Schneiden eines Tickets für die nächste Stufe trägt die neue Ticket-md
 eine Kopfzeile, die auf den Ursprung zurückzeigt:
 
 - CA-Ticket (aus einem MB-Ticket geschnitten): `Manager-Ref: MB-NN`
-- T-/WD-Ticket (aus einem CA-Ticket geschnitten): `Coding-Agent-Ref: CA-NN`
+- T-Ticket (aus einem CA-Ticket geschnitten): `Coding-Agent-Ref: CA-NN`
+  (cortex/cortex-b-Trennung läuft über den Lane-Tag im Titel, `[cortex-b]`,
+  nicht über einen eigenen ID-Prefix)
 
 Beispiel (Kopf eines CA-Tickets):
 
