@@ -2,12 +2,12 @@
 
 Cortex' Kanban board — backend **and** the Ionic app in one repo, served at one origin.
 
-The board is projected **live** from `~/cortex/docs/tickets/*.md` (Leo's single
-ticket truth). There is no separate JSON store: every read re-parses the `.md`
-files, every write edits one `.md` file.
+The board is projected **live** from GitHub Issues `NG-Bullseye/cortex` (SSOT since
+2026-07-02, `tickets_source.py:50`, `config.py:343`). `BOARD_BACKEND=markdown|todoist`
+switches to the legacy `.md` or the Todoist backend; there is no separate JSON store.
 
 ```
-        ~/cortex/docs/tickets/*.md            ← truth (one .md per ticket)
+        GitHub Issues NG-Bullseye/cortex      ← truth (BOARD_BACKEND, default github)
                      │
               tickets_source.py               (status → column, projects the board)
              ┌───────┴────────┐
@@ -19,7 +19,7 @@ files, every write edits one `.md` file.
 
 ## Layout
 
-- `tickets_source.py` — parse + project the board from the ticket `.md` files
+- `tickets_source.py` — facade; picks the backend (`github_backend.py` · `backend.py` · `todoist_backend.py`)
 - `server.py` — MCP face for Claude (stdio; not registered in `~/.claude.json` as of 2026-09-15)
 - `api.py` — REST face + serves the built app at the same origin (systemd `--user` unit `cortex-board-api`, port 8930)
 - `app/` — the Ionic/Angular/Capacitor app; `cd app && npm install && npm run build` → `app/www`
@@ -32,7 +32,7 @@ python3 -m venv .venv && .venv/bin/pip install -e .   # one-time
 .venv/bin/python api.py                                # REST + app host, :8930
 ```
 
-Truth dir overridable via `CORTEX_TICKETS_DIR`, API port via `CORTEX_BOARD_PORT`,
+Markdown truth dir (backend `markdown`) via `CORTEX_TICKETS_DIR`, API port via `CORTEX_BOARD_PORT`,
 app build dir via `CORTEX_BOARD_WWW` (default repo-relative `app/www`).
 
 ## Board-Agent (`board` tmux-Session)
@@ -47,7 +47,7 @@ Telegram  ──any update──▶  watchdog telegram_inbox (the ONLY getUpdate
                                   └─ append-only ──▶  ~/repos/watchdog/data/telegram_updates.jsonl
                                                        (one queue, raw updates, update_id = offset)
 board-agent  ──mcp__telegram-hub__telegram_poll(offset)──▶  filters `/board <text>` client-side
-             ──mcp__board__add_ticket──▶  ~/cortex/docs/tickets/T-NN_*.md  → column "new"
+             ──mcp__board__add_ticket──▶  GitHub Issue T-NN in NG-Bullseye/cortex  → column "new"
 ```
 
 - The Watchdog's `daemon/telegram_inbox.py` is the **Telegram hub**: the single
@@ -60,7 +60,7 @@ board-agent  ──mcp__telegram-hub__telegram_poll(offset)──▶  filters `/
   starts with `/board ` are board intake (prefix stripped); everything else is
   the Watchdog's. A `tail -F` on the queue file is a pure wakeup; the structured
   read is `telegram_poll`. Each `/board` line becomes a ticket via the `board`
-  MCP (`add_ticket` → `T-NN_slug.md`, status `new`).
+  MCP (`add_ticket` → GitHub Issue `T-NN`, status `new`).
 
 Spawn:
 
