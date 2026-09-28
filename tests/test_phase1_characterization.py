@@ -66,6 +66,18 @@ ARCHIVE_TICKETS = {
 DRIVER = r'''
 import json, os, sys, importlib
 mod_name = sys.argv[1]
+import subprocess as _sp
+def _no_gh(real):
+    def guard(*a, **kw):
+        cmd = a[0] if a else kw.get("args")
+        first = cmd[0] if isinstance(cmd, (list, tuple)) and cmd else str(cmd).split()[0] if cmd else ""
+        if os.path.basename(str(first)) == "gh":
+            sys.stderr.write("GH_CALL_BLOCKED: test must not reach GitHub\n")
+            os._exit(97)
+        return real(*a, **kw)
+    return guard
+for _n in ("run", "check_output", "check_call", "call", "Popen"):
+    setattr(_sp, _n, _no_gh(getattr(_sp, _n)))
 ts = importlib.import_module(mod_name)
 
 def _norm_path(d):
@@ -205,12 +217,73 @@ def _strip_volatile(snap: dict) -> dict:
     return s
 
 
+# Heutiger Vertrag (nach Phase 1 ergaenzt): jedes Ticket-Dict traegt `provenance`
+# (Default "") und `release_pending` (Default False). Die Phase-1-Baseline kennt beide
+# nicht; sie bekommt die Defaults, der Rest bleibt byte-identisch verglichen.
+CONTRACT_DEFAULTS = {"provenance": "", "release_pending": False}
+
+
+def _ticket_dicts(obj):
+    """Projizierte Board-Tickets = Eintraege einer `tickets`-Liste (nicht add/move-Returns)."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k == "tickets" and isinstance(v, list):
+                yield from (t for t in v if isinstance(t, dict))
+            else:
+                yield from _ticket_dicts(v)
+    elif isinstance(obj, list):
+        for v in obj:
+            yield from _ticket_dicts(v)
+
+
+def _tickets_without_contract_fields(snap: dict) -> list:
+    return [t.get("id") for t in _ticket_dicts(snap) if not all(k in t for k in CONTRACT_DEFAULTS)]
+
+
+def _with_contract_defaults(snap: dict) -> dict:
+    s = json.loads(json.dumps(snap))
+    for t in _ticket_dicts(s):
+        for k, v in CONTRACT_DEFAULTS.items():
+            t.setdefault(k, v)
+    return s
+
+
+def _columns(obj, path=""):
+    if isinstance(obj, dict):
+        if "column" in obj and "tickets" in obj:
+            yield path, obj
+        for k, v in obj.items():
+            yield from _columns(v, f"{path}.{k}")
+
+
+def _columns_without_rev(snap: dict) -> list:
+    return [p for p, c in _columns(snap) if not c.get("rev")]
+
+
+def _drop_rev(snap: dict) -> dict:
+    s = json.loads(json.dumps(snap))
+    for _, c in _columns(s):
+        c.pop("rev", None)
+    return s
+
+
 def main() -> int:
     orig_mod = _provision_original()
     orig = _run(orig_mod)
     new = _run("tickets_source")
 
     o, n = _strip_volatile(orig), _strip_volatile(new)
+    missing = _tickets_without_contract_fields(n)
+    if missing:
+        print(f"FAIL: tickets ohne provenance/release_pending: {missing[:5]}")
+        return 1
+    o = _with_contract_defaults(o)
+    # `rev` ist ein Hash ueber den Spalteninhalt — er aendert sich zwangslaeufig mit den
+    # neuen Feldern. Vertrag: jede Spalte traegt einen; verglichen wird der Inhalt.
+    if _columns_without_rev(n):
+        print(f"FAIL: Spalten ohne rev: {_columns_without_rev(n)[:5]}")
+        return 1
+    o, n = _drop_rev(o), _drop_rev(n)
     if o == n:
         print("OK: new facade byte-identical to original tickets_source")
         print(f"  board columns: {[ (c, new['board_initial'][c]['count']) for c in new['board_initial']['columns'] ]}")
