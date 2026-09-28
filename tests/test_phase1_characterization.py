@@ -167,6 +167,9 @@ def _run(mod_name: str) -> dict:
         env = dict(os.environ)
         env["CORTEX_TICKETS_DIR"] = str(tdir)
         env["CORTEX_SCAN_TICKETS_DIR"] = str(sdir)
+        # Default-Backend ist github (tickets_source.py:50) — ohne diese Zeile legt der
+        # Driver echte Issues in NG-Bullseye/cortex an (#1216/#1217, 29.09.).
+        env["BOARD_BACKEND"] = "markdown"
         # _orig module imports as tests._orig_tickets_source path-wise; we point
         # sys.path at both repo root (for new ts / config / backend) and tests/.
         env["PYTHONPATH"] = f"{REPO}:{REPO / 'tests'}:" + env.get("PYTHONPATH", "")
