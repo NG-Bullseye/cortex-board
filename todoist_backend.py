@@ -169,6 +169,10 @@ class TodoistClient:
     def delete_task(self, task_id: str) -> None:
         self._request("DELETE", f"tasks/{task_id}")
 
+    def close_task(self, task_id: str) -> None:
+        # complete (check off) a task; way back is POST tasks/{id}/reopen
+        self._request("POST", f"tasks/{task_id}/close")
+
 
 # `BoardBackend` (ABC) is imported lazily inside the class to avoid any import
 # cycle and to keep backend.py free of a Todoist dependency.

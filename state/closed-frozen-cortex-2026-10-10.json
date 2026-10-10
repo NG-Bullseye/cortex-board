@@ -1,0 +1,1557 @@
+{
+ "auftrag": "NG-Bullseye/project-manager-agent#144",
+ "projekt": "boards/cortex",
+ "projekt_id": "6gx6J22wGXrVP2MW",
+ "rueckweg": "POST https://api.todoist.com/api/v1/tasks/<id>/reopen",
+ "offen_vorher": {
+  "boards": 6,
+  "cerebellum": 0,
+  "coding-agent": 0,
+  "coding-agent-a": 7,
+  "coding-agent-b": 0,
+  "cortex": 305,
+  "maintenance": 305,
+  "manager": 18,
+  "security": 0
+ },
+ "closed": [
+  {
+   "id": "6h2qG53HVXfCJw7W",
+   "content": "WD-81: light.badlicht_links wird wiederholt aus-/angeschaltet: Slot",
+   "issue": "NG-Bullseye/cortex#144"
+  },
+  {
+   "id": "6h3gW29xmq8GfgR4",
+   "content": "T-245 — T-245 — [cortex] Flurlicht laeuft bis Sonnenuntergang auf Tages-Fallback statt So-Do-Kurve",
+   "issue": "NG-Bullseye/cortex#524"
+  },
+  {
+   "id": "6h2qG96pVcFJMf3W",
+   "content": "WD-81: light.badlicht_links wird wiederholt aus-/angeschaltet: Slot",
+   "issue": "NG-Bullseye/cortex#144"
+  },
+  {
+   "id": "6h3gW2JX5hhwXfhW",
+   "content": "T-237 — [cortex-b] coord pending erkennt keine unbeantworteten DIRECTs (Reply-Ledger-Luecke)",
+   "issue": "NG-Bullseye/cortex#513"
+  },
+  {
+   "id": "6h2qGC96HVwmm3J4",
+   "content": "WD-60: gdrive-bisync.service bricht ab (13 fatale Fehler, exit 7):",
+   "issue": "NG-Bullseye/cortex#87"
+  },
+  {
+   "id": "6h3gW2J2c7J82VGW",
+   "content": "T-236 — [cortex-b] Smoketest-Workflow triggert nur bei PR, nicht bei Push — Develop kann silent brechen (Fund aus T-234-Review 2026-07-05)",
+   "issue": "NG-Bullseye/cortex#512"
+  },
+  {
+   "id": "6h3gW3vxP3qCvV5W",
+   "content": "WD-77 — Day-Blackout (Tag-Blackout) komplett entfernen, nur Night-Blackout",
+   "issue": "NG-Bullseye/cortex#455"
+  },
+  {
+   "id": "6h2qGCGhWmPxJrj4",
+   "content": "WD-55: config/musik/so.py: 08:00-Slot 'deep_house_morgen' + Folge-S",
+   "issue": "NG-Bullseye/cortex#74"
+  },
+  {
+   "id": "6h3gW2WjcvhmCc34",
+   "content": "T-234 — GOLD-FUND (Mesh-Infra): Subagent-Health nur reaktiv verifiziert, nicht proaktiv (System-Test-Fund 2026-07-05)",
+   "issue": "NG-Bullseye/cortex#507"
+  },
+  {
+   "id": "6h3gW3wQWhCq2Gm4",
+   "content": "T-66 — [REVERTED durch Leo 2026-06-21] RT-Persona Marin = reine Vorlesemaschine",
+   "issue": "NG-Bullseye/cortex#453"
+  },
+  {
+   "id": "6gx6JC6M95fW5gw4",
+   "content": "WD-38: Fremde Hintergrundstimme (TV/Gespräch) flutet beide Voice-Pf",
+   "issue": "NG-Bullseye/cortex#52"
+  },
+  {
+   "id": "6h2qGCMgV4gG37xW",
+   "content": "WD-54: KRITISCH: Echo-Wake-Fallback in engine_musik.py umgeht light",
+   "issue": "NG-Bullseye/cortex#73"
+  },
+  {
+   "id": "6h3gW2WF83Jgg34W",
+   "content": "T-233 — Coord-Liveness-Blindspot: aktiver Tool-Wait sieht wie toter Agent aus (System-Test-Fund 2026-07-05)",
+   "issue": "NG-Bullseye/cortex#505"
+  },
+  {
+   "id": "6h3gW6H4QXG5P4XW",
+   "content": "T-156 — Backup-Verifikation (Test-Restore) + verwaiste watchdog-Timer → Maintenance-Agent migrieren",
+   "issue": "NG-Bullseye/cortex#412"
+  },
+  {
+   "id": "6gx6JC94RC3g6rx4",
+   "content": "WD-40: Sunset-Scene schaltet light.helix + switch.pflanzenlampe an;",
+   "issue": "NG-Bullseye/cortex#54"
+  },
+  {
+   "id": "6h2qGCQqWc5xhf54",
+   "content": "WD-52: Day/Night-Blackout ist ein Workaround, nicht das eigentliche",
+   "issue": "NG-Bullseye/cortex#71"
+  },
+  {
+   "id": "6h3gW5VRjRrmxqP4",
+   "content": "T-172 — Owner-Fehl-ID blockiert Voice-Session — Speaker-Schwelle/Embedding-Fehlkalibrierung (Wurzel an der Quelle verifiziert; turn-detection WIDERLEGT)",
+   "issue": "NG-Bullseye/cortex#428"
+  },
+  {
+   "id": "6h3gW79XMgcM2Jp4",
+   "content": "T-146 — Cyberspaces-Website → Raspberry Pi 5",
+   "issue": "NG-Bullseye/cortex#402"
+  },
+  {
+   "id": "6gx6JCGp98424jg4",
+   "content": "WD-47: Presence-Blindspot: Athom mmWave (Wohnzimmer, deckt flur/pc/",
+   "issue": "NG-Bullseye/cortex#65"
+  },
+  {
+   "id": "6h2qGCWw8FJPvwp4",
+   "content": "WD-78: Flurlicht strandet an: Motion beleuchtet flurlicht im Tag-Bl",
+   "issue": "NG-Bullseye/cortex#141"
+  },
+  {
+   "id": "6h3gVxv94WMXQjfW",
+   "content": "T-251 — [cortex] Todoist-Board-Mapping an Leos bestehende 'boards'-Struktur angleichen",
+   "issue": "NG-Bullseye/cortex#532"
+  },
+  {
+   "id": "6h3gW7FgpxjPVh2W",
+   "content": "T-145 — Data-Disk Archaeologie + Cloud-Migration",
+   "issue": "NG-Bullseye/cortex#401"
+  },
+  {
+   "id": "6h2qGF5C7pqfX2xW",
+   "content": "WD-71: NewsEvent feuert wiederholt bei user_away mit aktivem Tag-Bl",
+   "issue": "NG-Bullseye/cortex#139"
+  },
+  {
+   "id": "6h3gW7XGWWVvCR64",
+   "content": "T-140 — Local-Intent-LLM für Voice-Schalten (eigene Pipeline, Cortex-Gate, User-Prio)",
+   "issue": "NG-Bullseye/cortex#396"
+  },
+  {
+   "id": "6gx6JCQh2c5c4f34",
+   "content": "WD-50: Musik-Engine fährt bei jeder Slot-Grenze die komplette Start",
+   "issue": "NG-Bullseye/cortex#69"
+  },
+  {
+   "id": "6h2qGFGPcM8897RW",
+   "content": "WD-64: main_rotation-Slot spielt nie ab: config/musik/so_do.py:19 u",
+   "issue": "NG-Bullseye/cortex#126"
+  },
+  {
+   "id": "6h3gW8Qp6Qr5PPg4",
+   "content": "T-125 — [cortex-b] Session-/Rate-Limit-Queue + Batch-Abarbeitung (wiederverwendbare Queue-Struktur)",
+   "issue": "NG-Bullseye/cortex#381"
+  },
+  {
+   "id": "6gx6JCVpmP4fgJQW",
+   "content": "WD-51: Predictive-Maintenance Bug-Sammelticket (alle erfassten Anomalien/Risiken)",
+   "issue": "NG-Bullseye/cortex#67"
+  },
+  {
+   "id": "6h2qGFFxGpPWC354",
+   "content": "WD-68: Leo-Nacht-Licht-Spec 2026-05-19 (Verschaerfung zu WD-67): (1",
+   "issue": "NG-Bullseye/cortex#130"
+  },
+  {
+   "id": "6h3gWC5wgFWP64X4",
+   "content": "T-100 — voice-note transcribe → speech-engine-Whisper via cortex-Egress",
+   "issue": "NG-Bullseye/cortex#356"
+  },
+  {
+   "id": "6gx6JCgpgrP73G5W",
+   "content": "WD-53: switch.nabu_terminal_display_backlight wird seit 11:16 dauer",
+   "issue": "NG-Bullseye/cortex#72"
+  },
+  {
+   "id": "6h2qGFJQQpRWQWRW",
+   "content": "WD-67: Flur-Abendlicht falsch (Leo 2026-05-19): um 22:00 schon rot",
+   "issue": "NG-Bullseye/cortex#129"
+  },
+  {
+   "id": "6h3gWCjf5835m55W",
+   "content": "T-77 — Zimmerlicht-Slot überfährt manuelle Einstellung + falsche Farbe (Use-Case-Verstoß)",
+   "issue": "NG-Bullseye/cortex#345"
+  },
+  {
+   "id": "6gx6JCjgRR7W2pMW",
+   "content": "WD-56: FireTV-Nav-Loop oszilliert Home/Following/Kacheln 18 Schritt",
+   "issue": "NG-Bullseye/cortex#77"
+  },
+  {
+   "id": "6h2qGFMHhjx5m4HW",
+   "content": "WD-66: Blackout blieb an obwohl er sich haette aufheben muessen; Le",
+   "issue": "NG-Bullseye/cortex#128"
+  },
+  {
+   "id": "6h2qGFRVcHQwQjV4",
+   "content": "WD-69: FireTV-Smart-Agent (chat_server.py firetv-smart) loopt weite",
+   "issue": "NG-Bullseye/cortex#135"
+  },
+  {
+   "id": "6h2qGFXh9V8p7ww4",
+   "content": "WD-70: FireTV-Smart-Agent (chat_server.py firetv-smart) hat weiterh",
+   "issue": "NG-Bullseye/cortex#136"
+  },
+  {
+   "id": "6gx6JCw3Mfvmfr6W",
+   "content": "WD-80: Tote Entities werden weiter getrackt: light.flurlicht_2 unav",
+   "issue": "NG-Bullseye/cortex#143"
+  },
+  {
+   "id": "6h2qGFv3RJGXcCp4",
+   "content": "WD-48: WelcomeHome firetv/smart HTTPCall faellt jedes Heimkommen mi",
+   "issue": "NG-Bullseye/cortex#66"
+  },
+  {
+   "id": "6h2qGFx98j24cR94",
+   "content": "WD-42: Beamer-Lautstaerke (bt-volume-control ESP): Pause ZWISCHEN d",
+   "issue": "NG-Bullseye/cortex#58"
+  },
+  {
+   "id": "6h2qGG5mRJgWmcQ4",
+   "content": "WD-44: Beamer-Volume + Leos Video-Audio wird 'die ganze Zeit' auf 5",
+   "issue": "NG-Bullseye/cortex#61"
+  },
+  {
+   "id": "6h2qGG7Cghhf3wj4",
+   "content": "WD-46: Samstag 08:00 wollte Echo Dot wecken + Deep House spielen (c",
+   "issue": "NG-Bullseye/cortex#63"
+  },
+  {
+   "id": "6h2qGGF3v4qGrHv4",
+   "content": "WD-43: Beamer-Lautstaerke wird bei JEDEM Slot-Edge + Sync-Knopf auf",
+   "issue": "NG-Bullseye/cortex#59"
+  },
+  {
+   "id": "6h2qGGJFxGCmG9J4",
+   "content": "WD-41: Wochenend-Slot-Config (fr_sa) kippt um Punkt Mitternacht auf",
+   "issue": "NG-Bullseye/cortex#56"
+  },
+  {
+   "id": "6h2qG9PC6wMPhcg4",
+   "content": "WD-80: Tote Entities werden weiter getrackt: light.flurlicht_2 unav",
+   "issue": "NG-Bullseye/cortex#143"
+  },
+  {
+   "id": "6h2qGGM6X7PC3GxW",
+   "content": "WD-39: sunset_event_active haengt die ganze Nacht True nach Sonnenu",
+   "issue": "NG-Bullseye/cortex#53"
+  },
+  {
+   "id": "6h2qGFXjW3mXGgQW",
+   "content": "WD-56: FireTV-Nav-Loop oszilliert Home/Following/Kacheln 18 Schritt",
+   "issue": "NG-Bullseye/cortex#77"
+  },
+  {
+   "id": "6h2qGGVH7W9P3hvW",
+   "content": "WD-12: Voice-driven autonomous developer-flow: Leo spricht, watchdog handelt komplett o",
+   "issue": "NG-Bullseye/cortex#11"
+  },
+  {
+   "id": "6h2qGFgMr3p8Hg6W",
+   "content": "WD-53: switch.nabu_terminal_display_backlight wird seit 11:16 dauer",
+   "issue": "NG-Bullseye/cortex#72"
+  },
+  {
+   "id": "6h2qGFpJV2m3Mw3W",
+   "content": "WD-51: Predictive-Maintenance Bug-Sammelticket (alle erfassten Anomalien/Risiken)",
+   "issue": "NG-Bullseye/cortex#67"
+  },
+  {
+   "id": "6h2qGFv2qxHvHPQ4",
+   "content": "WD-50: Musik-Engine fährt bei jeder Slot-Grenze die komplette Start",
+   "issue": "NG-Bullseye/cortex#69"
+  },
+  {
+   "id": "6h2qGG2w9GGqRCC4",
+   "content": "WD-47: Presence-Blindspot: Athom mmWave (Wohnzimmer, deckt flur/pc/",
+   "issue": "NG-Bullseye/cortex#65"
+  },
+  {
+   "id": "6h2qGG3Q3xXX7974",
+   "content": "WD-40: Sunset-Scene schaltet light.helix + switch.pflanzenlampe an;",
+   "issue": "NG-Bullseye/cortex#54"
+  },
+  {
+   "id": "6h2qGG7c7Wqrw3QW",
+   "content": "WD-38: Fremde Hintergrundstimme (TV/Gespräch) flutet beide Voice-Pf",
+   "issue": "NG-Bullseye/cortex#52"
+  },
+  {
+   "id": "6h2qGJ6cMJmwXH24",
+   "content": "WD-04: switch.kerze hängt 'on' (seit 2026-05-08T18:07Z, ~7h). 03:00:00 STORE DENY ENTIT",
+   "issue": "NG-Bullseye/cortex#4"
+  },
+  {
+   "id": "6h2qGJ7WMqPXjFcW",
+   "content": "WD-03: Beamer-Volume Drift",
+   "issue": "NG-Bullseye/cortex#3"
+  },
+  {
+   "id": "6h2qGJH5qXHFxGJW",
+   "content": "WD-16: Workflow-shift: ticket-files PARALLEL als gh issues, agents via gh-issues skill",
+   "issue": "NG-Bullseye/cortex#15"
+  },
+  {
+   "id": "6h2qGJR9PC5HxJ9W",
+   "content": "WD-15: Remote-Setup: cortex + speech-engine + watchdog brauchen github-remote fuer PR-f",
+   "issue": "NG-Bullseye/cortex#14"
+  },
+  {
+   "id": "6h2qGJVQHX9c99qW",
+   "content": "WD-14: Security: HA-config remote-URL enthaelt GitHub-token im klartext",
+   "issue": "NG-Bullseye/cortex#13"
+  },
+  {
+   "id": "6h2qGJfX8qvm2VP4",
+   "content": "WD-13: Skill-installation openclaw/openclaw github + gh-issues (2026-05-11 20:38)",
+   "issue": "NG-Bullseye/cortex#12"
+  },
+  {
+   "id": "6h2qGJpcrCq3hpqW",
+   "content": "WD-60: gdrive-bisync.service bricht ab (13 fatale Fehler, exit 7):",
+   "issue": "NG-Bullseye/cortex#87"
+  },
+  {
+   "id": "6h3453jXJfF5gQw4",
+   "content": "WD-80: Tote Entities werden weiter getrackt: light.flurlicht_2 unav",
+   "issue": "NG-Bullseye/cortex#143"
+  },
+  {
+   "id": "6h3455P9CJ33ChJW",
+   "content": "WD-56: FireTV-Nav-Loop oszilliert Home/Following/Kacheln 18 Schritt",
+   "issue": "NG-Bullseye/cortex#77"
+  },
+  {
+   "id": "6h2qGJvqwxWVhvq4",
+   "content": "WD-55: config/musik/so.py: 08:00-Slot 'deep_house_morgen' + Folge-S",
+   "issue": "NG-Bullseye/cortex#74"
+  },
+  {
+   "id": "6h3455VWqWqvPvG4",
+   "content": "WD-53: switch.nabu_terminal_display_backlight wird seit 11:16 dauer",
+   "issue": "NG-Bullseye/cortex#72"
+  },
+  {
+   "id": "6h3455fP2M3jrFx4",
+   "content": "WD-51: Predictive-Maintenance Bug-Sammelticket (alle erfassten Anomalien/Risiken)",
+   "issue": "NG-Bullseye/cortex#67"
+  },
+  {
+   "id": "6h3455gH9CV5HcxW",
+   "content": "WD-50: Musik-Engine fährt bei jeder Slot-Grenze die komplette Start",
+   "issue": "NG-Bullseye/cortex#69"
+  },
+  {
+   "id": "6h2qGJxQHgwxc8RW",
+   "content": "WD-54: KRITISCH: Echo-Wake-Fallback in engine_musik.py umgeht light",
+   "issue": "NG-Bullseye/cortex#73"
+  },
+  {
+   "id": "6h3455r3qG3JfcmW",
+   "content": "WD-47: Presence-Blindspot: Athom mmWave (Wohnzimmer, deckt flur/pc/",
+   "issue": "NG-Bullseye/cortex#65"
+  },
+  {
+   "id": "6h2qGM5Fpv87rRRW",
+   "content": "WD-52: Day/Night-Blackout ist ein Workaround, nicht das eigentliche",
+   "issue": "NG-Bullseye/cortex#71"
+  },
+  {
+   "id": "6h34562HX85QjX54",
+   "content": "WD-40: Sunset-Scene schaltet light.helix + switch.pflanzenlampe an;",
+   "issue": "NG-Bullseye/cortex#54"
+  },
+  {
+   "id": "6h2qGM66fqC3Wjx4",
+   "content": "WD-22: flurlicht stale-on after welcome-home (race-protect)",
+   "issue": "NG-Bullseye/cortex#36"
+  },
+  {
+   "id": "6h345646gWXhg794",
+   "content": "WD-38: Fremde Hintergrundstimme (TV/Gespräch) flutet beide Voice-Pf",
+   "issue": "NG-Bullseye/cortex#52"
+  },
+  {
+   "id": "6h3453Vg7Jx5644W",
+   "content": "WD-81: light.badlicht_links wird wiederholt aus-/angeschaltet: Slot",
+   "issue": "NG-Bullseye/cortex#144"
+  },
+  {
+   "id": "6h3895hVc6xcc9mW",
+   "content": "WD-81: light.badlicht_links wird wiederholt aus-/angeschaltet: Slot",
+   "issue": "NG-Bullseye/cortex#144"
+  },
+  {
+   "id": "6h3895w8w43fHcQ4",
+   "content": "WD-80: Tote Entities werden weiter getrackt: light.flurlicht_2 unav",
+   "issue": "NG-Bullseye/cortex#143"
+  },
+  {
+   "id": "6h38972hgXfR9FR4",
+   "content": "WD-56: FireTV-Nav-Loop oszilliert Home/Following/Kacheln 18 Schritt",
+   "issue": "NG-Bullseye/cortex#77"
+  },
+  {
+   "id": "6h389764xpF2mFwW",
+   "content": "WD-53: switch.nabu_terminal_display_backlight wird seit 11:16 dauer",
+   "issue": "NG-Bullseye/cortex#72"
+  },
+  {
+   "id": "6h389784QxCjFvQW",
+   "content": "WD-51: Predictive-Maintenance Bug-Sammelticket (alle erfassten Anomalien/Risiken)",
+   "issue": "NG-Bullseye/cortex#67"
+  },
+  {
+   "id": "6h3897CjwV6ggXrW",
+   "content": "WD-50: Musik-Engine fährt bei jeder Slot-Grenze die komplette Start",
+   "issue": "NG-Bullseye/cortex#69"
+  },
+  {
+   "id": "6gx6J86FCG2xqMV4",
+   "content": "WD-07: Branch-reorg: production/develop/main strategie statt wd/wd-XX-stack",
+   "issue": "NG-Bullseye/cortex#7"
+  },
+  {
+   "id": "6gx6J877774jf9w4",
+   "content": "WD-08: Public github account aufraeumen + als top-notch repo-portfolio darstellen",
+   "issue": "NG-Bullseye/cortex#8"
+  },
+  {
+   "id": "6h3897HC53mPGfcW",
+   "content": "WD-47: Presence-Blindspot: Athom mmWave (Wohnzimmer, deckt flur/pc/",
+   "issue": "NG-Bullseye/cortex#65"
+  },
+  {
+   "id": "6h3897GcvrfFWrcW",
+   "content": "WD-40: Sunset-Scene schaltet light.helix + switch.pflanzenlampe an;",
+   "issue": "NG-Bullseye/cortex#54"
+  },
+  {
+   "id": "6gx6J8JX3jCfvggW",
+   "content": "WD-36: PC1 ging beim Heimkommen 2026-05-15 nicht an (Leo). WelcomeH",
+   "issue": "NG-Bullseye/cortex#51"
+  },
+  {
+   "id": "6h3897PJ7RWWvPC4",
+   "content": "WD-38: Fremde Hintergrundstimme (TV/Gespräch) flutet beide Voice-Pf",
+   "issue": "NG-Bullseye/cortex#52"
+  },
+  {
+   "id": "6gx6J8MqPJJ2cxpW",
+   "content": "WD-45: Stufe-5-Initiative (Leo 2026-05-16 02:47 'mach das volle Kan",
+   "issue": "NG-Bullseye/cortex#62"
+  },
+  {
+   "id": "6h3gVxxhC75MM9p4",
+   "content": "T-250 — Brand New Task",
+   "issue": "NG-Bullseye/cortex#531"
+  },
+  {
+   "id": "6gx6J8QQF2gR4Xm4",
+   "content": "WD-61: STANDING UMBRELLA: High-Risk-Backlog. Sammel-Container fuer",
+   "issue": "NG-Bullseye/cortex#90"
+  },
+  {
+   "id": "6h3gW24Hv7Pj94VW",
+   "content": "T-249 — Brand New Task",
+   "issue": "NG-Bullseye/cortex#530"
+  },
+  {
+   "id": "6gx6J8VqGCQM2qw4",
+   "content": "WD-62: switch.kerze brennt bei Sundown im leeren Zuhause: 2026-05-1",
+   "issue": "NG-Bullseye/cortex#118"
+  },
+  {
+   "id": "6h3gW2hrjjq8WC9W",
+   "content": "T-219 — [cortex] Away-Trigger GPS-Geofence-Gate",
+   "issue": "NG-Bullseye/cortex#488"
+  },
+  {
+   "id": "6gx6J8fHxXr5r4QW",
+   "content": "WD-63: WelcomeHome firetv/smart: cortex.gateway ERROR HTTPCall fail",
+   "issue": "NG-Bullseye/cortex#120"
+  },
+  {
+   "id": "6h3gW3wGQVFvfQr4",
+   "content": "WD-58 — Speech-Flow: Floskel zwischen Wakeword und Mic-Offen entfernen",
+   "issue": "NG-Bullseye/cortex#454"
+  },
+  {
+   "id": "6gx6J8c426pr85M4",
+   "content": "WD-65: Voice bekommt keine Antwort (Leo 2026-05-19 ~22:00-22:15): c",
+   "issue": "NG-Bullseye/cortex#127"
+  },
+  {
+   "id": "6h3gW43rcC8VwQFW",
+   "content": "T-63 — Voice-Flow-Kohärenz: ein Geist, keine spürbaren Schichten",
+   "issue": "NG-Bullseye/cortex#452"
+  },
+  {
+   "id": "6h3gW448g5qwPXVW",
+   "content": "T-51 — ZFS-Cloud-Backup-System (image-basiert, sanoid-frei)",
+   "issue": "NG-Bullseye/cortex#451"
+  },
+  {
+   "id": "6h3gW599gcPG9Jf4",
+   "content": "T-180 — Watchdog auf lokales Gemma 4 E4B via Ollama umstellen",
+   "issue": "NG-Bullseye/cortex#436"
+  },
+  {
+   "id": "6h3gW5CpcvmG2RvW",
+   "content": "T-179 — Voice-Feedback: Backend-Fehlergrund speakbar + hyperintelligent in Persona eingewoben (Wave-1, Leos #1)",
+   "issue": "NG-Bullseye/cortex#435"
+  },
+  {
+   "id": "6gx6J92Pwgw2jgHW",
+   "content": "WD-88: MusicSlotEvent.plan (events/musik.py) nutzt SLOT_KEYS={SLOT(",
+   "issue": "NG-Bullseye/cortex#167"
+  },
+  {
+   "id": "6h3gW5H7HcxRxHh4",
+   "content": "T-178 — [DESIGN] Maintenance als Bedürfnis/Mesh-Service — report→Todoist-Board, Aufräumen im Morgen-Slot",
+   "issue": "NG-Bullseye/cortex#434"
+  },
+  {
+   "id": "6gx6J8wcJF5f9jF4",
+   "content": "WD-89: 17:00-Race: on_blackout_end (engine_zone.py) emittiert Black",
+   "issue": "NG-Bullseye/cortex#168"
+  },
+  {
+   "id": "6h3gW5Fr6hpXmRW4",
+   "content": "T-177 — [DESIGN] Security-Stack als AMYGDALA — Mesh-Client schickt Stress-Sinn an watchdog",
+   "issue": "NG-Bullseye/cortex#433"
+  },
+  {
+   "id": "6gx6J93JGP5hM6GW",
+   "content": "WD-90: pc_1-Drift: Store switch.pc_1=on (source pc1_event, Welcome-",
+   "issue": "NG-Bullseye/cortex#169"
+  },
+  {
+   "id": "6h3gW66WCvxg49P4",
+   "content": "T-162 — Voice-Outage turn_detection=null Regression (Server-VAD weg, Session stirbt 3s)",
+   "issue": "NG-Bullseye/cortex#418"
+  },
+  {
+   "id": "6h3gW69WVmc28F9W",
+   "content": "T-159 — [FEATURE] Livestream-Audio-Tap: Homeserver-Audio-Output → /livestream auf Command-Deck",
+   "issue": "NG-Bullseye/cortex#415"
+  },
+  {
+   "id": "6gx6J976mVXFpM7W",
+   "content": "WD-92: Licht-Slot haengt auf 16:00 statt 18:00 nach Re-Entry zwisch",
+   "issue": "NG-Bullseye/cortex#171"
+  },
+  {
+   "id": "6h3gW6FGxWJ79Wx4",
+   "content": "T-158 — Morning-Briefing schlägt still fehl — claude --print teilt Session-Limit-Pool",
+   "issue": "NG-Bullseye/cortex#414"
+  },
+  {
+   "id": "6h3gW6mVF9g6hq74",
+   "content": "T-152 — Telegram-Outbound: sendMessage HTTP 400",
+   "issue": "NG-Bullseye/cortex#408"
+  },
+  {
+   "id": "6h3gW9Pgp3CcghvW",
+   "content": "T-110 — coord-Mesh: mehrzeilige Nachrichten truncaten am Newline (watchdog-Empfang)",
+   "issue": "NG-Bullseye/cortex#366"
+  },
+  {
+   "id": "6h3gWCxW3v2McHgW",
+   "content": "T-72 — maintenance-agent: Leos Todoist täglich pflegen (5-Uhr-Slot, Inbox-Triage + Anreicherung)",
+   "issue": "NG-Bullseye/cortex#340"
+  },
+  {
+   "id": "6gx6J9XcV57v9324",
+   "content": "WD-11: Scrum-Master + 5+ Mitarbeiter-Team-Simulation via Sub-Agents",
+   "issue": "NG-Bullseye/cortex#10"
+  },
+  {
+   "id": "6h2qFW52r6WFCP6W",
+   "content": "T-193 — Speech-Flow: Floskel zwischen Wakeword und Mic-Offen entfernen",
+   "issue": "NG-Bullseye/cortex#449"
+  },
+  {
+   "id": "6h2qFW89P2mxjMg4",
+   "content": "T-192 — [REVERTED durch Leo 2026-06-21] RT-Persona Marin = reine Vorlesemaschine — falsche Richtung, LOCAL+REMOTE bleibt; Code nur auf Branch t66-marin-vorlesemaschine (PR #31 closed)",
+   "issue": "NG-Bullseye/cortex#448"
+  },
+  {
+   "id": "6h2qFWC8xGx9hQCW",
+   "content": "T-191 — Voice-Flow-Kohärenz: ein Geist, keine spürbaren Schichten",
+   "issue": "NG-Bullseye/cortex#447"
+  },
+  {
+   "id": "6h2qFWGX2QrXP4M4",
+   "content": "T-190 — ZFS-Cloud-Backup-System (image-basiert, sanoid-frei)",
+   "issue": "NG-Bullseye/cortex#446"
+  },
+  {
+   "id": "6h2qFWMgV7H7H4F4",
+   "content": "T-188 — switch.leds geht tagsueber grundlos an (Leo 2026-05-25 beobachtet). LED-Strip le",
+   "issue": "NG-Bullseye/cortex#444"
+  },
+  {
+   "id": "6h2qFWRVpWXvJf6W",
+   "content": "T-187 — light.kaktus flappte 5x am 22.05 in 09:54-10:41 UTC (schnellste: 60ms on→off) al",
+   "issue": "NG-Bullseye/cortex#443"
+  },
+  {
+   "id": "6h2qFWXMj77r6FC4",
+   "content": "T-186 — Day-Blackout (Tag-Blackout) komplett entfernen, nur Night-Blackout behalten",
+   "issue": "NG-Bullseye/cortex#442"
+  },
+  {
+   "id": "6h2qG4w3H93PJP54",
+   "content": "WD-84: Zigbee-Koordinator-Crash: Mass-Unavailable + false State-Restore",
+   "issue": "NG-Bullseye/cortex#151"
+  },
+  {
+   "id": "6h2qG586RRr4R6CW",
+   "content": "WD-83: evaluate_and_apply doppelt bei Sunset-Window-Start (20:29) +",
+   "issue": "NG-Bullseye/cortex#148"
+  },
+  {
+   "id": "6h2qG5Cgm4RFJ374",
+   "content": "WD-82: switch.leds manual-override mit expires_at 2026-05-22T19:00",
+   "issue": "NG-Bullseye/cortex#147"
+  },
+  {
+   "id": "6h2qG5MG8wqrp9c4",
+   "content": "WD-79: Presence oszilliert dauerhaft off>on>off alle ~10-40s, auch",
+   "issue": "NG-Bullseye/cortex#142"
+  },
+  {
+   "id": "6h2qG6qJF7hcFv7W",
+   "content": "WD-59: light.badlicht_links/_rechts flappen periodisch (~25-30min):",
+   "issue": "NG-Bullseye/cortex#83"
+  },
+  {
+   "id": "6h2qG8gr8QFfgCRW",
+   "content": "WD-92: Licht-Slot haengt auf 16:00 statt 18:00 nach Re-Entry zwisch",
+   "issue": "NG-Bullseye/cortex#171"
+  },
+  {
+   "id": "6h2qG8j7X7w337mW",
+   "content": "WD-90: pc_1-Drift: Store switch.pc_1=on (source pc1_event, Welcome-",
+   "issue": "NG-Bullseye/cortex#169"
+  },
+  {
+   "id": "6h2qG8v46jrwrwf4",
+   "content": "WD-89: 17:00-Race: on_blackout_end (engine_zone.py) emittiert Black",
+   "issue": "NG-Bullseye/cortex#168"
+  },
+  {
+   "id": "6h2qG927Hh77QpR4",
+   "content": "WD-88: MusicSlotEvent.plan (events/musik.py) nutzt SLOT_KEYS={SLOT(",
+   "issue": "NG-Bullseye/cortex#167"
+  },
+  {
+   "id": "6h2qG93fJGWC7h2W",
+   "content": "WD-84: Zigbee-Koordinator-Crash: Mass-Unavailable + false State-Restore",
+   "issue": "NG-Bullseye/cortex#151"
+  },
+  {
+   "id": "6h2qG99VRCXxHMC4",
+   "content": "WD-83: evaluate_and_apply doppelt bei Sunset-Window-Start (20:29) +",
+   "issue": "NG-Bullseye/cortex#148"
+  },
+  {
+   "id": "6h2qG9FrWcpFwRM4",
+   "content": "WD-82: switch.leds manual-override mit expires_at 2026-05-22T19:00",
+   "issue": "NG-Bullseye/cortex#147"
+  },
+  {
+   "id": "6h2qG9Qmx2QMx8HW",
+   "content": "WD-79: Presence oszilliert dauerhaft off>on>off alle ~10-40s, auch",
+   "issue": "NG-Bullseye/cortex#142"
+  },
+  {
+   "id": "6h2qG9VhpmqFGv84",
+   "content": "WD-65: Voice bekommt keine Antwort (Leo 2026-05-19 ~22:00-22:15): c",
+   "issue": "NG-Bullseye/cortex#127"
+  },
+  {
+   "id": "6h2qG9h53CJxXQ74",
+   "content": "WD-63: WelcomeHome firetv/smart: cortex.gateway ERROR HTTPCall fail",
+   "issue": "NG-Bullseye/cortex#120"
+  },
+  {
+   "id": "6h2qGF9rH94jrj84",
+   "content": "WD-61: STANDING UMBRELLA: High-Risk-Backlog. Sammel-Container fuer",
+   "issue": "NG-Bullseye/cortex#90"
+  },
+  {
+   "id": "6h2qGFWRh7wM6cH4",
+   "content": "WD-59: light.badlicht_links/_rechts flappen periodisch (~25-30min):",
+   "issue": "NG-Bullseye/cortex#83"
+  },
+  {
+   "id": "6h343qcjV5MffhWW",
+   "content": "T-217 — Founder.html WebGL-Curl-Noise-Partikel-Animation (The-Spirit-Stil)",
+   "issue": "NG-Bullseye/cortex#481"
+  },
+  {
+   "id": "6h343qmMfhj4FJfW",
+   "content": "T-216 — 7 vorbestehend rote Smoketests auf speech-engine main",
+   "issue": "NG-Bullseye/cortex#480"
+  },
+  {
+   "id": "6h343qqf6gXWfr9W",
+   "content": "T-214 — Newsletter-Write-Validierung gegen LLM-Timeout-Fallback",
+   "issue": "NG-Bullseye/cortex#478"
+  },
+  {
+   "id": "6h343qpjH6pP5x34",
+   "content": "T-212 — SC-03: Voice-Uhrzeit-Antwort falsch (Web-PTT \"21 Uhr 58\" statt korrekt)",
+   "issue": "NG-Bullseye/cortex#475"
+  },
+  {
+   "id": "6h343qvWCgFvR6p4",
+   "content": "T-211 — 7 vorbestehend rote Smoketests auf speech-engine main",
+   "issue": "NG-Bullseye/cortex#474"
+  },
+  {
+   "id": "6h343qxjH8Rh84hW",
+   "content": "T-210 — News-Read-Catch-up nach Container-Restart (analog T-180)",
+   "issue": "NG-Bullseye/cortex#473"
+  },
+  {
+   "id": "6h343r6mh7vwcQR4",
+   "content": "T-209 — Newsletter-Write-Validierung gegen LLM-Timeout-Fallback",
+   "issue": "NG-Bullseye/cortex#472"
+  },
+  {
+   "id": "6h343r8VRRgj9pj4",
+   "content": "T-207 — [cortex] coord send: Absender aus Session/ENV ableiten statt 2-Agenten-Heuristik",
+   "issue": "NG-Bullseye/cortex#468"
+  },
+  {
+   "id": "6h343rFG2MgqMxX4",
+   "content": "T-206 — Herz-Plan 4.1 — Voice-Transkription in den Manager-Flow (HA-Script ablösen)",
+   "issue": "NG-Bullseye/cortex#467"
+  },
+  {
+   "id": "6h343rJGWV6G6qj4",
+   "content": "T-205 — Herz-Plan 3 — Batch-Delegation + Review-Rückweg (Leos Durchsatz-Modell)",
+   "issue": "NG-Bullseye/cortex#466"
+  },
+  {
+   "id": "6h343rQwM372vFGW",
+   "content": "T-204 — Herz-Plan 2.2 — agent-log.md-Lifecycle aktivieren (alle Agent-Repos)",
+   "issue": "NG-Bullseye/cortex#465"
+  },
+  {
+   "id": "6h343rVF7CXx4mWW",
+   "content": "T-203 — Herz-Plan 2.1 — manager_pulse: ein Call aggregiert Gesamtsystemzustand",
+   "issue": "NG-Bullseye/cortex#464"
+  },
+  {
+   "id": "6h343rfxXWjCg634",
+   "content": "T-202 — Herz-Plan 1.2 — Code-Graph light: ctags + Import-Scanner über 13 Repos",
+   "issue": "NG-Bullseye/cortex#463"
+  },
+  {
+   "id": "6h343rhqp8FhGfMW",
+   "content": "T-201 — Herz-Plan 1.1 — knowledge-MCP: Vektor-RAG über alle CLAUDE.md + Docs",
+   "issue": "NG-Bullseye/cortex#462"
+  },
+  {
+   "id": "6h343rmQPV4C2jg4",
+   "content": "T-200 — ⚠ GOLD-FUND: Autonomes Sozialverhalten — Besucher begrüßen (Caro etc.), nicht Handwerker",
+   "issue": "NG-Bullseye/cortex#461"
+  },
+  {
+   "id": "6h343rvp4W88m574",
+   "content": "T-199 — ⚠ GOLD-FUND: Voice-Listening-Zeitintervall fixieren (fest nach letzter VAD, nicht variabel)",
+   "issue": "NG-Bullseye/cortex#460"
+  },
+  {
+   "id": "6h343rxq6m7hW874",
+   "content": "T-198 — ⚠ GOLD-FUND: 60s-Heartbeat-Signal aller Agents → Watchdog (Dead-Agent-Detection)",
+   "issue": "NG-Bullseye/cortex#459"
+  },
+  {
+   "id": "6h3448GxG5mpXRp4",
+   "content": "T-195 — Zimmerlicht-Slot überfährt manuelle Einstellung + falsche Farbe (GH #345, T-77)",
+   "issue": "NG-Bullseye/cortex#457"
+  },
+  {
+   "id": "6h3448Ffr6JpqRP4",
+   "content": "T-196 — Flur hold-while-occupied: kein unavailable-Fallback (GH #432, T-176)",
+   "issue": "NG-Bullseye/cortex#456"
+  },
+  {
+   "id": "6h3448MpgJ37RprW",
+   "content": "T-197 — MusicSlotEvent hijackt aktives Gerät (GH #167, WD-88)",
+   "issue": "NG-Bullseye/cortex#458"
+  },
+  {
+   "id": "6h3448VcwfRRF5x4",
+   "content": "T-198 — ⚠ GOLD-FUND: 60s-Heartbeat-Signal aller Agents → Watchdog (Dead-Agent-Detection)",
+   "issue": "NG-Bullseye/cortex#459"
+  },
+  {
+   "id": "6h3448c59rfCFQV4",
+   "content": "T-199 — ⚠ GOLD-FUND: Voice-Listening-Zeitintervall fixieren (fest nach letzter VAD, nicht variabel)",
+   "issue": "NG-Bullseye/cortex#460"
+  },
+  {
+   "id": "6h3448cX3MXmVFj4",
+   "content": "T-200 — ⚠ GOLD-FUND: Autonomes Sozialverhalten — Besucher begrüßen (Caro etc.), nicht Handwerker",
+   "issue": "NG-Bullseye/cortex#461"
+  },
+  {
+   "id": "6h3448fhhjjWfJJW",
+   "content": "T-201 — Herz-Plan 1.1 — knowledge-MCP: Vektor-RAG über alle CLAUDE.md + Docs",
+   "issue": "NG-Bullseye/cortex#462"
+  },
+  {
+   "id": "6h3448mfwPm5p4r4",
+   "content": "T-202 — Herz-Plan 1.2 — Code-Graph light: ctags + Import-Scanner über 13 Repos",
+   "issue": "NG-Bullseye/cortex#463"
+  },
+  {
+   "id": "6h3448mc9Gh5P4R4",
+   "content": "T-203 — Herz-Plan 2.1 — manager_pulse: ein Call aggregiert Gesamtsystemzustand",
+   "issue": "NG-Bullseye/cortex#464"
+  },
+  {
+   "id": "6h3448wRf3V7HR64",
+   "content": "T-204 — Herz-Plan 2.2 — agent-log.md-Lifecycle aktivieren (alle Agent-Repos)",
+   "issue": "NG-Bullseye/cortex#465"
+  },
+  {
+   "id": "6h34493mHmGjCmgW",
+   "content": "T-205 — Herz-Plan 3 — Batch-Delegation + Review-Rückweg (Leos Durchsatz-Modell)",
+   "issue": "NG-Bullseye/cortex#466"
+  },
+  {
+   "id": "6h34494C7Vv38gRW",
+   "content": "T-206 — Herz-Plan 4.1 — Voice-Transkription in den Manager-Flow (HA-Script ablösen)",
+   "issue": "NG-Bullseye/cortex#467"
+  },
+  {
+   "id": "6h34497Mx4hj49gW",
+   "content": "T-207 — [cortex] coord send: Absender aus Session/ENV ableiten statt 2-Agenten-Heuristik",
+   "issue": "NG-Bullseye/cortex#468"
+  },
+  {
+   "id": "6h344995mvpjpF24",
+   "content": "T-208 — Perception-Fusions-Herzschlag (GH #380, T-124)",
+   "issue": "NG-Bullseye/cortex#380"
+  },
+  {
+   "id": "6h3449F8JgMHc7HW",
+   "content": "T-209 — Newsletter-Write-Validierung gegen LLM-Timeout-Fallback",
+   "issue": "NG-Bullseye/cortex#472"
+  },
+  {
+   "id": "6h3449FFGR5QVVhW",
+   "content": "T-210 — News-Read-Catch-up nach Container-Restart (analog T-180)",
+   "issue": "NG-Bullseye/cortex#473"
+  },
+  {
+   "id": "6h3449M96c48M5rW",
+   "content": "T-211 — 7 vorbestehend rote Smoketests auf speech-engine main",
+   "issue": "NG-Bullseye/cortex#474"
+  },
+  {
+   "id": "6h3449V3V8Cqx7MW",
+   "content": "T-212 — SC-03: Voice-Uhrzeit-Antwort falsch (Web-PTT \"21 Uhr 58\" statt korrekt)",
+   "issue": "NG-Bullseye/cortex#475"
+  },
+  {
+   "id": "6h3449Q7hvJrjgQW",
+   "content": "T-213 — MCP-HTTP-Layer über FastAPI (GH #409, T-153)",
+   "issue": "NG-Bullseye/cortex#409"
+  },
+  {
+   "id": "6h3449f8ffCcqf5W",
+   "content": "T-214 — Newsletter-Write-Validierung gegen LLM-Timeout-Fallback",
+   "issue": "NG-Bullseye/cortex#478"
+  },
+  {
+   "id": "6h3449jwQmv8pwP4",
+   "content": "T-215 — Watchdog auf lokales Gemma 4 E4B (GH #436, T-180)",
+   "issue": "NG-Bullseye/cortex#436"
+  },
+  {
+   "id": "6h3449hHMgc9CwHW",
+   "content": "T-216 — 7 vorbestehend rote Smoketests auf speech-engine main",
+   "issue": "NG-Bullseye/cortex#480"
+  },
+  {
+   "id": "6h3449mj9qFXgvmW",
+   "content": "T-217 — Cerebellum Evaluations-Strom filtern (GH #376, T-120)",
+   "issue": "NG-Bullseye/cortex#376"
+  },
+  {
+   "id": "6h34538CQ9X69XMW",
+   "content": "WD-92: Licht-Slot haengt auf 16:00 statt 18:00 nach Re-Entry zwisch",
+   "issue": "NG-Bullseye/cortex#171"
+  },
+  {
+   "id": "6h34539fV9WxjWXW",
+   "content": "WD-90: pc_1-Drift: Store switch.pc_1=on (source pc1_event, Welcome-",
+   "issue": "NG-Bullseye/cortex#169"
+  },
+  {
+   "id": "6h3453C4CJW5r56W",
+   "content": "WD-89: 17:00-Race: on_blackout_end (engine_zone.py) emittiert Black",
+   "issue": "NG-Bullseye/cortex#168"
+  },
+  {
+   "id": "6h3453GX4Rjq9HgW",
+   "content": "WD-88: MusicSlotEvent.plan (events/musik.py) nutzt SLOT_KEYS={SLOT(",
+   "issue": "NG-Bullseye/cortex#167"
+  },
+  {
+   "id": "6h3453JwhHvfxPg4",
+   "content": "WD-84: Zigbee-Koordinator-Crash: Mass-Unavailable + false State-Restore",
+   "issue": "NG-Bullseye/cortex#151"
+  },
+  {
+   "id": "6h3453ccFjGm8PH4",
+   "content": "WD-83: evaluate_and_apply doppelt bei Sunset-Window-Start (20:29) +",
+   "issue": "NG-Bullseye/cortex#148"
+  },
+  {
+   "id": "6h3453gx8JpMVXW4",
+   "content": "WD-82: switch.leds manual-override mit expires_at 2026-05-22T19:00",
+   "issue": "NG-Bullseye/cortex#147"
+  },
+  {
+   "id": "6h3453qHG9xVfrp4",
+   "content": "WD-79: Presence oszilliert dauerhaft off>on>off alle ~10-40s, auch",
+   "issue": "NG-Bullseye/cortex#142"
+  },
+  {
+   "id": "6h3453vmFfxRc8xW",
+   "content": "WD-65: Voice bekommt keine Antwort (Leo 2026-05-19 ~22:00-22:15): c",
+   "issue": "NG-Bullseye/cortex#127"
+  },
+  {
+   "id": "6h34543G8WMwH5WW",
+   "content": "WD-63: WelcomeHome firetv/smart: cortex.gateway ERROR HTTPCall fail",
+   "issue": "NG-Bullseye/cortex#120"
+  },
+  {
+   "id": "6h34554J8P5V85RW",
+   "content": "WD-61: STANDING UMBRELLA: High-Risk-Backlog. Sammel-Container fuer",
+   "issue": "NG-Bullseye/cortex#90"
+  },
+  {
+   "id": "6h3455Qx8x8FhVqW",
+   "content": "WD-59: light.badlicht_links/_rechts flappen periodisch (~25-30min):",
+   "issue": "NG-Bullseye/cortex#83"
+  },
+  {
+   "id": "6h3456GqG3Mv6xQ4",
+   "content": "WD-08: Public github account aufraeumen + als top-notch repo-portfolio darstellen",
+   "issue": "NG-Bullseye/cortex#8"
+  },
+  {
+   "id": "6h3456HM8r4cm684",
+   "content": "WD-07: Branch-reorg: production/develop/main strategie statt wd/wd-XX-stack",
+   "issue": "NG-Bullseye/cortex#7"
+  },
+  {
+   "id": "6h3456w555vC2RxW",
+   "content": "WD-62: switch.kerze brennt bei Sundown im leeren Zuhause: 2026-05-1",
+   "issue": "NG-Bullseye/cortex#118"
+  },
+  {
+   "id": "6h345744X5R34qM4",
+   "content": "WD-45: Stufe-5-Initiative (Leo 2026-05-16 02:47 'mach das volle Kan",
+   "issue": "NG-Bullseye/cortex#62"
+  },
+  {
+   "id": "6h3457798hfXP764",
+   "content": "WD-36: PC1 ging beim Heimkommen 2026-05-15 nicht an (Leo). WelcomeH",
+   "issue": "NG-Bullseye/cortex#51"
+  },
+  {
+   "id": "6h345V3jrQQ3m9h4",
+   "content": "WD-92: Licht-Slot haengt auf 16:00 statt 18:00 nach Re-Entry zwisch",
+   "issue": "NG-Bullseye/cortex#171"
+  },
+  {
+   "id": "6h3895MC3RG75Hr4",
+   "content": "WD-92: Licht-Slot haengt auf 16:00 statt 18:00 nach Re-Entry zwisch",
+   "issue": "NG-Bullseye/cortex#171"
+  },
+  {
+   "id": "6h3895RCfcMgG4QW",
+   "content": "WD-90: pc_1-Drift: Store switch.pc_1=on (source pc1_event, Welcome-",
+   "issue": "NG-Bullseye/cortex#169"
+  },
+  {
+   "id": "6h3895WP79qwRCHW",
+   "content": "WD-89: 17:00-Race: on_blackout_end (engine_zone.py) emittiert Black",
+   "issue": "NG-Bullseye/cortex#168"
+  },
+  {
+   "id": "6h3895cMvXPfp524",
+   "content": "WD-88: MusicSlotEvent.plan (events/musik.py) nutzt SLOT_KEYS={SLOT(",
+   "issue": "NG-Bullseye/cortex#167"
+  },
+  {
+   "id": "6h3895h4JMPF788W",
+   "content": "WD-84: Zigbee-Koordinator-Crash: Mass-Unavailable + false State-Restore",
+   "issue": "NG-Bullseye/cortex#151"
+  },
+  {
+   "id": "6h3895q27r2xv6c4",
+   "content": "WD-83: evaluate_and_apply doppelt bei Sunset-Window-Start (20:29) +",
+   "issue": "NG-Bullseye/cortex#148"
+  },
+  {
+   "id": "6h3895mvJ75RPpR4",
+   "content": "WD-82: switch.leds manual-override mit expires_at 2026-05-22T19:00",
+   "issue": "NG-Bullseye/cortex#147"
+  },
+  {
+   "id": "6h3895xCFMXhv7HW",
+   "content": "WD-79: Presence oszilliert dauerhaft off>on>off alle ~10-40s, auch",
+   "issue": "NG-Bullseye/cortex#142"
+  },
+  {
+   "id": "6h38965P6c4VCpqW",
+   "content": "WD-65: Voice bekommt keine Antwort (Leo 2026-05-19 ~22:00-22:15): c",
+   "issue": "NG-Bullseye/cortex#127"
+  },
+  {
+   "id": "6h38963QVcMJhch4",
+   "content": "WD-63: WelcomeHome firetv/smart: cortex.gateway ERROR HTTPCall fail",
+   "issue": "NG-Bullseye/cortex#120"
+  },
+  {
+   "id": "6h3896jXh4PMJpM4",
+   "content": "WD-61: STANDING UMBRELLA: High-Risk-Backlog. Sammel-Container fuer",
+   "issue": "NG-Bullseye/cortex#90"
+  },
+  {
+   "id": "6h3896w3Qfx7JX5W",
+   "content": "WD-59: light.badlicht_links/_rechts flappen periodisch (~25-30min):",
+   "issue": "NG-Bullseye/cortex#83"
+  },
+  {
+   "id": "6h3897cJ7FmhCCJW",
+   "content": "WD-08: Public github account aufraeumen + als top-notch repo-portfolio darstellen",
+   "issue": "NG-Bullseye/cortex#8"
+  },
+  {
+   "id": "6h3897WCgx9MPhH4",
+   "content": "WD-07: Branch-reorg: production/develop/main strategie statt wd/wd-XX-stack",
+   "issue": "NG-Bullseye/cortex#7"
+  },
+  {
+   "id": "6h3gW25CmjRv9hXW",
+   "content": "T-248 — [worker] Maintenance/Security-Todoist-Sync zeigt 0 trotz 210 aktiver Findings",
+   "issue": "NG-Bullseye/cortex#529"
+  },
+  {
+   "id": "6h3gW29chwPx48h4",
+   "content": "T-242 — Neural-Interceptor-Priming — Kontext-Vorgabe für Verdict-Daemon (Design)",
+   "issue": "NG-Bullseye/cortex#521"
+  },
+  {
+   "id": "6h3gW2H5jCqQvvf4",
+   "content": "T-239 — [cortex-b] CI \"Cortex Smoketest\" ist auf praktisch jeder PR rot — t220/t221 FakeHA.get_state()-Signatur-Mismatch blockt grüne CI systemweit",
+   "issue": "NG-Bullseye/cortex#516"
+  },
+  {
+   "id": "6h3gW2R5V8XCggj4",
+   "content": "T-235 — GOLD-FUND (Mesh-Infra): Enter-Swallow bei Selbst-Fortsetzung — T-163-Fix deckt Self-Continue-Pfad nicht ab (System-Test-Fund 2026-07-05)",
+   "issue": "NG-Bullseye/cortex#508"
+  },
+  {
+   "id": "6h3gW2fx7PfwXqH4",
+   "content": "T-231 — model-switch: Web-Button auf HTTP-Bridge statt SSH-Shellout umstellen",
+   "issue": "NG-Bullseye/cortex#502"
+  },
+  {
+   "id": "6h3gW2fVWJRGgRgW",
+   "content": "T-220 — [cortex] WelcomeHome-Playlist bei Stille (Leo direkt beauftragt)",
+   "issue": "NG-Bullseye/cortex#490"
+  },
+  {
+   "id": "6h3gW2p5QQC9RWm4",
+   "content": "T-222 — [cortex-b] SC-03 Voice-Uhrzeit-Bug — Re-Open trotz Status=resolved",
+   "issue": "NG-Bullseye/cortex#486"
+  },
+  {
+   "id": "6h2qFW5HWj83QqrW",
+   "content": "T-194 — Day-Blackout (Tag-Blackout) komplett entfernen, nur Night-Blackout behalten",
+   "issue": "NG-Bullseye/cortex#450"
+  },
+  {
+   "id": "6h2qFWHVX6r3JXg4",
+   "content": "T-189 — cortex verarbeitet seit 25.05 22:33 KEINE Telegram-Inputs (Bot reagiert nicht au",
+   "issue": "NG-Bullseye/cortex#445"
+  },
+  {
+   "id": "6h2qFWgMMpRxf744",
+   "content": "T-185 — Welcome-Home Arrival-Report (sozial-subtiler TTS-Recap)",
+   "issue": "NG-Bullseye/cortex#441"
+  },
+  {
+   "id": "6h3gW4vRXJX29j2W",
+   "content": "T-184 — Speech-Flow: Floskel zwischen Wakeword und Mic-Offen entfernen",
+   "issue": "NG-Bullseye/cortex#440"
+  },
+  {
+   "id": "6h3gW4wGQvc89WVW",
+   "content": "T-183 — EPIC: Mesh/Monitor/Permission/Board als system-agnostische Libraries (LangGraph-Alternative) — Analyse",
+   "issue": "NG-Bullseye/cortex#439"
+  },
+  {
+   "id": "6h3gW52p6W7hRPPW",
+   "content": "T-182 — Motion-only-Lichter: NICHTS darf Motion blockieren — Manual-Override + Blackout-Shield ausnehmen",
+   "issue": "NG-Bullseye/cortex#438"
+  },
+  {
+   "id": "6h3gW5778GJrfMh4",
+   "content": "T-181 — T-93 — Announce-Kanal: Zombie-Session hält Direct-TTS für bis zu 600s gefangen (Idle-Wächter one-shot statt zurücksetzbar)",
+   "issue": "NG-Bullseye/cortex#437"
+  },
+  {
+   "id": "6h3gW5J9PJR2PVP4",
+   "content": "T-176 — Flur hold-while-occupied: kein unavailable-Fallback (count-from-clear-Lücke)",
+   "issue": "NG-Bullseye/cortex#432"
+  },
+  {
+   "id": "6h3gW5P2VWjxGVv4",
+   "content": "T-175 — HA-Event-Stream Source-Label + read-only Audit-Kopie (Teil B)",
+   "issue": "NG-Bullseye/cortex#431"
+  },
+  {
+   "id": "6h3gW5RFmfjr3r9W",
+   "content": "T-174 — Gaming-Mode Auto-OFF in Bett-Zone (Zeit-Gate raus)",
+   "issue": "NG-Bullseye/cortex#430"
+  },
+  {
+   "id": "6h3gW5Wpg9m7Q5fW",
+   "content": "T-173 — Manual-Override überlebt Slot/Zonen-Re-Apply — held-state-Ownership für on/off-Power",
+   "issue": "NG-Bullseye/cortex#429"
+  },
+  {
+   "id": "6h3gW5ccg9v3W324",
+   "content": "T-171 — Voice: geholtes Ergebnis wird nicht gesprochen (Result landet nach session_close)",
+   "issue": "NG-Bullseye/cortex#427"
+  },
+  {
+   "id": "6h3gW5jJmVqW8GX4",
+   "content": "T-170 — Deploy-Hygiene speech-engine: --force darf venv/data-Symlink nie löschen (git clean -fd-Wurzel)",
+   "issue": "NG-Bullseye/cortex#426"
+  },
+  {
+   "id": "6h3gW5mwP7q6fhwW",
+   "content": "T-169 — clear_bad_entities + clear_motion_entities konsolidieren (+ Manual-Hold-Fix in clear_bad)",
+   "issue": "NG-Bullseye/cortex#425"
+  },
+  {
+   "id": "6h3gW5p7WM4XqV7W",
+   "content": "T-168 — smoketest_router_shortcuts T-75-Drift fixen — Worker-Pfad mocken statt subprocess.run",
+   "issue": "NG-Bullseye/cortex#424"
+  },
+  {
+   "id": "6h3gW5qc927wcFJW",
+   "content": "T-167 — null-Modus Frame-Delivery-Lücke — voiced-Frames erreichen den lokalen Endpointer nicht (audio_in_q ungespeist), Voice-End-State, server_vad-Stopgap ablösen",
+   "issue": "NG-Bullseye/cortex#423"
+  },
+  {
+   "id": "6h3gW5wV67582xh4",
+   "content": "T-166 — Voice-Router Registry-Shrink (~14KB→~7-8KB Classify-Prompt) — Qualitäts-Regression-gegated",
+   "issue": "NG-Bullseye/cortex#422"
+  },
+  {
+   "id": "6h3gW62hp6M34CgW",
+   "content": "T-164 — Voice-Verdict-Barriere nur im Gastmodus scharf (Leo allein wird nicht mehr challenged)",
+   "issue": "NG-Bullseye/cortex#420"
+  },
+  {
+   "id": "6h3gW62JhGgMQv64",
+   "content": "T-163 — Auto-Compact am semantischen Seam — in den EINEN globalen Hook konsolidieren (per-agent clear_self.sh löschen)",
+   "issue": "NG-Bullseye/cortex#419"
+  },
+  {
+   "id": "6h3gW64WQw34CJPW",
+   "content": "T-161 — Voice-Identity: Primärnutzer Leo darf nie in den Gast-Enrollment-Pfad fallen (struktureller Root nach T-85)",
+   "issue": "NG-Bullseye/cortex#417"
+  },
+  {
+   "id": "6h3gW689vVfRpcR4",
+   "content": "T-160 — Flur-Geometrie-Wurzel: getrennte stay/enter-Koords + Off-Pfad (fixt Flackern + Dauer-An)",
+   "issue": "NG-Bullseye/cortex#416"
+  },
+  {
+   "id": "6h3gW6HgF972pMX4",
+   "content": "T-157 — [REVERTED durch Leo 2026-06-21] RT-Persona Marin = reine Vorlesemaschine — falsche Richtung, LOCAL+REMOTE bleibt; Code nur auf Branch t66-marin-vorlesemaschine (PR #31 closed)",
+   "issue": "NG-Bullseye/cortex#413"
+  },
+  {
+   "id": "6h3gW6QMPjpXgw44",
+   "content": "T-155 — cortex aus dem öffentlichen Mesh isolieren — Backend-Agent nur hinter coding-agent",
+   "issue": "NG-Bullseye/cortex#411"
+  },
+  {
+   "id": "6h3gW6VHVmGqf8f4",
+   "content": "T-154 — Voice-Flow-Kohärenz: ein Geist, keine spürbaren Schichten",
+   "issue": "NG-Bullseye/cortex#410"
+  },
+  {
+   "id": "6h3gW6h7Gm9cPfC4",
+   "content": "T-153 — MCP-HTTP-Layer über die FastAPI (Cortex-Tools für LLMs)",
+   "issue": "NG-Bullseye/cortex#409"
+  },
+  {
+   "id": "6h3gW6vj8WmPjH24",
+   "content": "T-151 — responses.jsonl Rotation/Truncate — Disk-Wachstum des Voice-Cognition-Bus",
+   "issue": "NG-Bullseye/cortex#407"
+  },
+  {
+   "id": "6h3gW72xwVq3V5C4",
+   "content": "T-150 — #cerebellum: Architekt re-proposed aufgelöste Drift-Resets stündlich (No-Op-Leak)",
+   "issue": "NG-Bullseye/cortex#406"
+  },
+  {
+   "id": "6h3gW74h5chHVvX4",
+   "content": "T-149 — `schalten pc` feuert rohes `switch/turn_on` → kein WoL, PC bootet nicht",
+   "issue": "NG-Bullseye/cortex#405"
+  },
+  {
+   "id": "6h3gW73mg3GW3cc4",
+   "content": "T-148 — Mail-Empfang: Oracle Always-Free VPS für system_one@cyberspaces.cloud",
+   "issue": "NG-Bullseye/cortex#404"
+  },
+  {
+   "id": "6h3gW77FMF9h3H4W",
+   "content": "T-147 — Eigene Google-Drive-API-Credentials fuer rclone",
+   "issue": "NG-Bullseye/cortex#403"
+  },
+  {
+   "id": "6h3gW7GjHHrCV6mW",
+   "content": "T-144 — Whisperx-Image schlankziehen (Modelle → Offshore-Volume)",
+   "issue": "NG-Bullseye/cortex#400"
+  },
+  {
+   "id": "6h3gW7Q5FqmHGW5W",
+   "content": "T-143 — ZFS-Cloud-Backup-System (image-basiert, sanoid-frei)",
+   "issue": "NG-Bullseye/cortex#399"
+  },
+  {
+   "id": "6h3gW7Rx8g4fffMW",
+   "content": "T-142 — Sundown-Device-Hold (1 % orange-rot, 45 min, zimmerlicht + flurlicht_2)",
+   "issue": "NG-Bullseye/cortex#398"
+  },
+  {
+   "id": "6h3gW7Rmp3gw7qH4",
+   "content": "T-141 — Telegram-Slash-Command-Antwort-Pipeline (Board-via-Klick)",
+   "issue": "NG-Bullseye/cortex#397"
+  },
+  {
+   "id": "6h3gW7cXHmcgj7p4",
+   "content": "T-139 — Cortex ↔ Watchdog Mediation-Contract (Voice-Routing)",
+   "issue": "NG-Bullseye/cortex#395"
+  },
+  {
+   "id": "6h3gW7g5jM8XqPvW",
+   "content": "T-138 — News-Bot-Abspaltung + Global-Log-Push (3-Kanal) + /c-Routing-Umbau",
+   "issue": "NG-Bullseye/cortex#394"
+  },
+  {
+   "id": "6h3gW7jrGmpgJm34",
+   "content": "T-137 — Reconnect-Sanity-Check: Geräte die aus Offline zurückkommen brauchen State-Validierung",
+   "issue": "NG-Bullseye/cortex#393"
+  },
+  {
+   "id": "6h3gW7jjjHg6JpWW",
+   "content": "T-136 — switch.abwesenheit hängt auf ON trotz WelcomeHome — assumed_state wird nicht zurückgesetzt",
+   "issue": "NG-Bullseye/cortex#392"
+  },
+  {
+   "id": "6h3gW7v9FFf4hjwW",
+   "content": "T-135 — Manager-Agent Phase 2: Watchdog-Migration — User-Tasks übertragen + Modell-Downgrade",
+   "issue": "NG-Bullseye/cortex#391"
+  },
+  {
+   "id": "6h3gW7r9m7g653V4",
+   "content": "T-134 — [watchdog→coding-agent] Manager-Agent bauen — neuer user-facing Agent auf project-manager-agent-Basis",
+   "issue": "NG-Bullseye/cortex#390"
+  },
+  {
+   "id": "6h3gW7xHv2jgW6j4",
+   "content": "T-133 — [cortex] Licht-Slot-Hänger: Slot-Advance nach Container-Restart reparieren (SC-01/WD-92)",
+   "issue": "NG-Bullseye/cortex#389"
+  },
+  {
+   "id": "6h3gW84J4C355qfW",
+   "content": "T-131 — [cortex-b] Pro-Repo Token-Usage-Tracer-MCP (ccusage) — welcher Agent/Repo verbrennt Quota",
+   "issue": "NG-Bullseye/cortex#387"
+  },
+  {
+   "id": "6h3gW8F6HwpjQrQW",
+   "content": "T-130 — [cortex] Long-lived Sessions gegen Model-Switch-Auth-Gift härten (cerebellum-401)",
+   "issue": "NG-Bullseye/cortex#386"
+  },
+  {
+   "id": "6h3gW8HhPFqq8wx4",
+   "content": "T-129 — [cortex] T-157-Addon: Usertasks aus Redis watchdog:collected_tasks im /vrm-SciFi-Terminal rendern",
+   "issue": "NG-Bullseye/cortex#385"
+  },
+  {
+   "id": "6h3gW8JJjqpHHFQW",
+   "content": "T-128 — [cortex-b] CLAUDE.md-/Findings-Refactor: Findings erst compact-save in File, nicht ins Kontextfenster",
+   "issue": "NG-Bullseye/cortex#384"
+  },
+  {
+   "id": "6h3gW8PMmh7g8QM4",
+   "content": "T-126 — [cortex-b] Morning-Briefing-Neubau: simpler/eleganter, praesenz-unabhaengig, projekt-agnostisch, alle MCP + GitHub",
+   "issue": "NG-Bullseye/cortex#382"
+  },
+  {
+   "id": "6h3gW8Wcj39MrHf4",
+   "content": "T-124 — [cortex] Perception-Fusions-Herzschlag: perception:head zur wachen Gesamtzustands-Wahrnehmung (σ-nah, WAIT-LEO)",
+   "issue": "NG-Bullseye/cortex#380"
+  },
+  {
+   "id": "6h3gW8cj9wmQ3vc4",
+   "content": "T-123 — [cortex-b] PM-Actor: Stuck-Units autonom re-triggern + eskalieren (aktive Haelfte von T-167)",
+   "issue": "NG-Bullseye/cortex#379"
+  },
+  {
+   "id": "6h3gW8fQPVhRfHF4",
+   "content": "T-122 — [watchdog] Coord-Handshake gegen Reply-Deadlocks — Zwei-Stufen-ACK (--expect-ack)",
+   "issue": "NG-Bullseye/cortex#378"
+  },
+  {
+   "id": "6h3gW8p4gQWfGjGW",
+   "content": "T-121 — [epic] Skill-First / Portable-Core — Drei-Schichten-Trennung (Skill/Config/Keyvault) je Repo",
+   "issue": "NG-Bullseye/cortex#377"
+  },
+  {
+   "id": "6h3gW8r83Ghc8qp4",
+   "content": "T-120 — [cortex] Cerebellum: Evaluations-Strom filtern — perception statt transitions",
+   "issue": "NG-Bullseye/cortex#376"
+  },
+  {
+   "id": "6h3gW8w5j6wQG5GW",
+   "content": "T-119 — docker-model-runner unhealthy seit 7 Tagen",
+   "issue": "NG-Bullseye/cortex#375"
+  },
+  {
+   "id": "6h3gW92vwJcQXqRW",
+   "content": "T-118 — [cortex] Auto-Continuation nach Credit-Stop: Sessions sollen selbstständig fortsetzen",
+   "issue": "NG-Bullseye/cortex#374"
+  },
+  {
+   "id": "6h3gW9474rhj96r4",
+   "content": "T-117 — [cortex-b] Deepseek↔Claude Model-Switching als eigenes GitHub-Repo mit Session-Kontinuität",
+   "issue": "NG-Bullseye/cortex#373"
+  },
+  {
+   "id": "6h3gW96w5mJxg944",
+   "content": "T-116 — [cortex] Zweites Telegram-Veredelungs-Profil als eigener Bot-Command (parallel zu Style Change)",
+   "issue": "NG-Bullseye/cortex#372"
+  },
+  {
+   "id": "6h3gW98wv9qHG52W",
+   "content": "T-115 — [cortex] Beamer/Gaming-Compound away-off-gap — heizt leere Wohnung bei Leo abwesend",
+   "issue": "NG-Bullseye/cortex#371"
+  },
+  {
+   "id": "6h3gW9CcXGcP72RW",
+   "content": "T-114 — Voice Phantom-Completion: Modell behauptet Aktions-Vollzug aus Intake-Ack (async Dispatch)",
+   "issue": "NG-Bullseye/cortex#370"
+  },
+  {
+   "id": "6h3gW9HRM5Gjm3F4",
+   "content": "T-113 — CYD-Panel 192.168.1.240 offline/boot-loop nach Neural-Button-OTA — Leo-physical-Recovery",
+   "issue": "NG-Bullseye/cortex#369"
+  },
+  {
+   "id": "6h3gW9Hr5X6fC3pW",
+   "content": "T-112 — Meilenstein 2: Neural Interceptor Mode (Gateway-vor-Gateway, Haiku-Audit, toggle-bar)",
+   "issue": "NG-Bullseye/cortex#368"
+  },
+  {
+   "id": "6h3gW9MVf9hj4VCW",
+   "content": "T-111 — onexip-central: pre-existing DELETE-Kill-Switch-WIP — Provenance + Commit-Entscheid (Leo)",
+   "issue": "NG-Bullseye/cortex#367"
+  },
+  {
+   "id": "6h3gW9QJ9j2PrGRW",
+   "content": "T-109 — ⚠️ LEO-GATE: Cerebellum Accuracy-Lärm in cortex:transitions (σ-gekoppelter Markov-Consumer)",
+   "issue": "NG-Bullseye/cortex#365"
+  },
+  {
+   "id": "6h3gW9XrGWRGG24W",
+   "content": "T-108 — Telegram-Veredelungs-Layer — Rhetorik/Filenames/Pfade/Core-Scripts, kein Wall-of-Text",
+   "issue": "NG-Bullseye/cortex#364"
+  },
+  {
+   "id": "6h3gW9gp852X5JjW",
+   "content": "T-107 — telegram_buffer.txt Single-Consumer-Konsolidierung — parallele Mündungen entfernen",
+   "issue": "NG-Bullseye/cortex#363"
+  },
+  {
+   "id": "6h3gW9hpqrH5Pw8W",
+   "content": "T-106 — smoketest_t106_c_mesh_routing.py ROT auf develop (Mesh-Envelope-Drift)",
+   "issue": "NG-Bullseye/cortex#362"
+  },
+  {
+   "id": "6h3gW9hJGqXpvrwW",
+   "content": "T-105 — cortex-Telegram-Egress instabil (Connection reset) + news_bot Parallel-Poller",
+   "issue": "NG-Bullseye/cortex#361"
+  },
+  {
+   "id": "6h3gW9pQrQrFXj54",
+   "content": "T-104 — Board Source-of-Truth-Flip: Todoist autoritativ statt md? (Leo-Entscheidung offen)",
+   "issue": "NG-Bullseye/cortex#360"
+  },
+  {
+   "id": "6h3gW9vWH5rcH8cW",
+   "content": "T-103 — pc_strahler-Pflanzenlampe an Präsenz-Szenen gekoppelt (away-off + welcome-on) statt reiner Zeitsteuerung",
+   "issue": "NG-Bullseye/cortex#359"
+  },
+  {
+   "id": "6h3gW9x552r488C4",
+   "content": "T-102 — web-speech-talkback — Web-PTT-Button gibt Antwort gesprochen zurück",
+   "issue": "NG-Bullseye/cortex#358"
+  },
+  {
+   "id": "6h3gWC24vjVwV464",
+   "content": "T-101 — maintenance-Repo braucht GitHub-Remote (Konsistenz/DR, Cloud-Heavy)",
+   "issue": "NG-Bullseye/cortex#357"
+  },
+  {
+   "id": "6h3gWC6MrXRJ9774",
+   "content": "T-98 — Abendfragenkatalog feuert um 23:55 TTS während Leo schläft (kein Sleep-Gate, NIGHT_BLACKOUT greift erst 00:30)",
+   "issue": "NG-Bullseye/cortex#355"
+  },
+  {
+   "id": "6h3gWC7QXQpppR6W",
+   "content": "T-97 — PC1-Falsch-Positiv: TTS-Frage \"PC1 ausschalten\" obwohl seit 22:37 aus (stale Pc1OnEvent)",
+   "issue": "NG-Bullseye/cortex#354"
+  },
+  {
+   "id": "6h3gWCGQCqv9xVv4",
+   "content": "T-96 — User-agnostisches Profil-System — Voice-ID als Schlüssel, personalisiertes Verhalten (Design-Phase)",
+   "issue": "NG-Bullseye/cortex#353"
+  },
+  {
+   "id": "6h3gWCCFJXjqwRm4",
+   "content": "T-95 — Slot-Off-By-One-Lücke 01:00-02:00 — so_do T_00_00 deckt 00-02, fr_sa hat T_01_00 (kein Off-Trigger)",
+   "issue": "NG-Bullseye/cortex#352"
+  },
+  {
+   "id": "6h3gWCM22qhv5GX4",
+   "content": "T-94 — 5 Geräte offline seit 23.6. (Handwerker-Stromkreis) — automatisch tracken+prüfen",
+   "issue": "NG-Bullseye/cortex#351"
+  },
+  {
+   "id": "6h3gWCJf5MW5Xq2W",
+   "content": "T-93 — T_22_00-Slot-Code≠Kommentar in so_do.py — Flur-Rot/Drosselung nie auf 23:30 verschoben",
+   "issue": "NG-Bullseye/cortex#350"
+  },
+  {
+   "id": "6h3gWCQ837fg4XQW",
+   "content": "T-91 — bt_volume_control UNAVAILABLE seit 19.6. — Bluetooth-Lautstärkenregler tot (Watchdog stumm)",
+   "issue": "NG-Bullseye/cortex#349"
+  },
+  {
+   "id": "6h3gWCVV2R4h4vx4",
+   "content": "T-87 — Cerebellum-Markov lernt Slotsystem nicht (Zeit→Slot-Feature fehlt, höchste Fehlerquote genau dort)",
+   "issue": "NG-Bullseye/cortex#348"
+  },
+  {
+   "id": "6h3gWCVMj2xrqrq4",
+   "content": "T-86 — cortex-Deploy recycled speech-engine in Crash-Loop (HEAD statt prod, Cross-Service)",
+   "issue": "NG-Bullseye/cortex#347"
+  },
+  {
+   "id": "6h3gWCcXF5HpwMX4",
+   "content": "T-85 — Token-Prozent-Meter für Dauer-Sessions (Anteil am 200k-Context-Limit)",
+   "issue": "NG-Bullseye/cortex#346"
+  },
+  {
+   "id": "6h3gWCqHq3fHm7HW",
+   "content": "T-76 — Redis-Container-TZ auf CEST (UTC→+2h Voice-/c-Zeitstempel-Versatz)",
+   "issue": "NG-Bullseye/cortex#344"
+  },
+  {
+   "id": "6h3gWCmQH59gC8rW",
+   "content": "T-75 — Voice-Identität Konvergenzplan (Fable) — Schritte 0-6 gebaut, akustisches E2E + Deploy offen",
+   "issue": "NG-Bullseye/cortex#343"
+  },
+  {
+   "id": "6h3gWCw84CfPjH4W",
+   "content": "T-74 — INDEX.md deterministisch generieren + Watchdog-Bug-Block-Konflikt auflösen",
+   "issue": "NG-Bullseye/cortex#342"
+  },
+  {
+   "id": "6h3gWCxwRRv8g4jW",
+   "content": "T-73 — Task-Prep-Anreicherung: Mail-Deeplink + E-Mail-Draft im Todoist-Task",
+   "issue": "NG-Bullseye/cortex#341"
+  },
+  {
+   "id": "6h3gWF68JR8HVf74",
+   "content": "T-58 — User-Farbe überlebt motion_expire nicht (within-slot-Versprechen bricht bei off)",
+   "issue": "NG-Bullseye/cortex#339"
+  },
+  {
+   "id": "6h3gWF4QfWMmQjC4",
+   "content": "WD-92: Licht-Slot haengt auf 16:00 statt 18:00 nach Re-Entry zwisch",
+   "issue": "NG-Bullseye/cortex#171"
+  },
+  {
+   "id": "6h3gWF9HMGF9VXM4",
+   "content": "WD-90: pc_1-Drift: Store switch.pc_1=on (source pc1_event, Welcome-",
+   "issue": "NG-Bullseye/cortex#169"
+  },
+  {
+   "id": "6h3gWF9qxx8q2Q24",
+   "content": "WD-89: 17:00-Race: on_blackout_end (engine_zone.py) emittiert Black",
+   "issue": "NG-Bullseye/cortex#168"
+  },
+  {
+   "id": "6h3gWprp89P4Qgv4",
+   "content": "WD-92: Licht-Slot haengt auf 16:00 statt 18:00 nach Re-Entry zwisch",
+   "issue": "NG-Bullseye/cortex#171"
+  },
+  {
+   "id": "6h3Mh5wXMgChXJgW",
+   "content": "T-221 — [cortex] P4: AWAY-Self-Healing — periodischer mmWave-Check recovered HOME",
+   "issue": null
+  },
+  {
+   "id": "6h343v65Qqg6VM64",
+   "content": "T-195 — ⚠ FUND: Web-PTT-Panel HTTP 413 — nginx client_max_body_size blockt 1.9MB-Clip",
+   "issue": null
+  }
+ ],
+ "anzahl": 305,
+ "errors": [],
+ "offen_nachher": {
+  "boards": 6,
+  "cerebellum": 0,
+  "coding-agent": 0,
+  "coding-agent-a": 7,
+  "coding-agent-b": 0,
+  "cortex": 0,
+  "maintenance": 305,
+  "manager": 18,
+  "security": 0
+ }
+}

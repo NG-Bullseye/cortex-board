@@ -21,7 +21,7 @@ Der Flow: zwei Faces (MCP für Claude, REST für die App) rufen die Fassade `tic
 
 | Modul | Eingang | Ausgang | Bedingung | Stellschraube | Innenleben |
 |---|---|---|---|---|---|
-| GitHub→Todoist-Sync | GitHub Issues | Todoist-Projekt | Unit `sync-github-todoist.timer` (5 min, nicht in diesem Repo) | — | `tools/sync_github_todoist.py:293` |
+| GitHub→Todoist-Sync (abgeschaltet) | GitHub Issues | Todoist-Projekt `boards/cortex` | läuft nicht: Unit `sync-github-todoist.timer` ist `disabled` (nicht in diesem Repo); Projekt `cortex` am 10.10.2026 geleert (#144, `tools/close_frozen_cortex_project.py:129` über `todoist_backend.py:172` `close_task`), Rückweg `state/closed-frozen-cortex-2026-10-10.json` (je ID POST `tasks/<id>/reopen`) | — | `tools/sync_github_todoist.py:293` |
 | Token-Usage-Sampler | Claude-Transkripte | Zähler-Sample | Timer `cortex-board-token-sample.timer` (2 h) | — | `token_usage.py:215` |
 | Archivierung erledigter Tickets | Markdown-Board | `archive/` | manuell | — | `tools/archive_done_tickets.py:326` |
 
