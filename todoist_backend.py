@@ -261,7 +261,7 @@ class TodoistBackend(BoardBackend):
     def _parse_id_title(self, content: str) -> tuple[str, str]:
         """Split a task title `T-5 — Title` into (id, title) using the same
         heading separator regex the markdown backend uses on the H1."""
-        line = content.strip()
+        line = (content or "").strip()  # API may deliver `content: null`
         m = self.config.heading_re.search(line)
         if m:  # tolerate a literal "# T-5 — Title" too
             line = m.group(1).strip()

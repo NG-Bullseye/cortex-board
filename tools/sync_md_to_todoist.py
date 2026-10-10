@@ -44,6 +44,12 @@ Guarantees
   trash), recoverable from Leo's Todoist trash; nothing is hard-deleted.
 - **Idempotent.** Field-level diffing: only changed fields are written; an
   unchanged board reconciles with zero writes.
+- **Full project is not a crash.** HTTP 403 `MAX_ITEMS_LIMIT_REACHED` on a
+  create stops the remaining creates, is reported once (stderr + `skipped_limit`
+  in the DONE line) and the run exits 0; the next run retries them.
+- **Tasks without a ticket id stay untouched.** A Todoist task whose title
+  carries no `<PREFIX>-NN` (or has no content at all) is neither matched nor
+  trashed.
 
 Reuse: like migrate_md_to_todoist this is config-parametrized — a maintenance /
 security board is just another `--board` once its BoardConfig exists.
@@ -67,7 +73,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from config import BOARDS, BoardConfig  # noqa: E402  single source — registry in config.py
 from backend import MarkdownBackend, FindingsBackend, BoardBackend  # noqa: E402
-from todoist_backend import TodoistBackend  # noqa: E402
+from todoist_backend import TodoistBackend, TodoistError  # noqa: E402
+
+# Todoist's `error_tag` for "project is full" (HTTP 403, error_code 49); it is
+# part of the TodoistError text because the client keeps the response body.
+PROJECT_LIMIT_TAG = "MAX_ITEMS_LIMIT_REACHED"
 
 
 def _source_backend(cfg: BoardConfig) -> BoardBackend:
@@ -281,19 +291,37 @@ def sync(board_key: str, dry_run: bool, only: str | None) -> int:
             cl.update_task(task["id"], **fields)
         if col_change is not None:
             cl.move_task(task["id"], sections[col_change])
-    for col, card in creates:
+    # A full project (HTTP 403 MAX_ITEMS_LIMIT_REACHED) is a state of Leo's
+    # Todoist account, not a failure of this run: trashes + updates are already
+    # applied, every further create would 403 the same way. So stop creating,
+    # say it once on stderr (journal of maintenance-board-mirror) and in the
+    # DONE line, and exit 0. Any other TodoistError still propagates.
+    skipped_limit = 0
+    for i, (col, card) in enumerate(creates):
         _, md_title = backend._parse_id_title(card["title"])
         tid = card["id"]
         content = f"{tid} — {md_title}" if md_title else tid
-        cl.add_task(
-            content=content,
-            project_id=project_id,
-            section_id=sections[col],
-            description=_short_desc(card),
-        )
+        try:
+            cl.add_task(
+                content=content,
+                project_id=project_id,
+                section_id=sections[col],
+                description=_short_desc(card),
+            )
+        except TodoistError as e:
+            if PROJECT_LIMIT_TAG not in str(e):
+                raise
+            skipped_limit = len(creates) - i
+            print(f"!!! {PROJECT_LIMIT_TAG}: todoist project "
+                  f"{board_cfg.todoist_project!r} (board={board_key}) is full — "
+                  f"{skipped_limit} of {len(creates)} creates skipped, first "
+                  f"skipped: {tid}; trashes and updates were applied",
+                  file=sys.stderr)
+            break
 
-    print(f"--- DONE: created={len(creates)} updated={len(updates)} "
-          f"trashed={len(trashes)} ---")
+    print(f"--- DONE: created={len(creates) - skipped_limit} "
+          f"updated={len(updates)} trashed={len(trashes)} "
+          f"skipped_limit={skipped_limit} ---")
     return 0
 
 
