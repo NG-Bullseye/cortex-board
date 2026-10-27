@@ -2,9 +2,13 @@
 
 ## Deep Modules — Ticket lesen/schreiben → Board projizieren
 
+> Stand 2026-10-27 · geprüft gegen 34d77c6
+
 Der Flow: zwei Faces (MCP für Claude, REST für die App) rufen die Fassade `tickets_source.py`, die genau ein Backend wählt (`BOARD_BACKEND`, Default `github`). Es gibt keine Flow-Datei; die Sequenz lebt in `tickets_source.py::_make_board`. Jede Innenleben-Zelle ist `datei:zeile` und muss per `grep -n` treffen.
 
 ## Flow
+
+> Stand 2026-10-27 · geprüft gegen 34d77c6
 
 **Sequenz:**
 
@@ -15,7 +19,7 @@ Der Flow: zwei Faces (MCP für Claude, REST für die App) rufen die Fassade `tic
 | 2 | Fassade | Board-Operation | Backend-Instanz | — | `BOARD_BACKEND` | `tickets_source.py:49` |
 | 3 | GitHub-Backend (Default) | Operation | Issue in `NG-Bullseye/cortex` via `gh` | `BOARD_BACKEND=github` | `config.py:343` | `github_backend.py:88` |
 | 3 | Markdown-Backend (Legacy) | Operation | `.md`-Datei | `BOARD_BACKEND=markdown` | `CORTEX_TICKETS_DIR` | `backend.py:63` |
-| 3 | Todoist-Backend | Operation | Todoist-Task | `BOARD_BACKEND=todoist` | — | `todoist_backend.py:178` |
+| 3 | Todoist-Backend | Operation | Todoist-Task | `BOARD_BACKEND=todoist` | — | `todoist_backend.py:182` |
 
 **Parallel:**
 
@@ -25,12 +29,18 @@ Der Flow: zwei Faces (MCP für Claude, REST für die App) rufen die Fassade `tic
 | Token-Usage-Sampler | Claude-Transkripte | Zähler-Sample | Timer `cortex-board-token-sample.timer` (2 h) | — | `token_usage.py:215` |
 | Archivierung erledigter Tickets | Markdown-Board | `archive/` | manuell | — | `tools/archive_done_tickets.py:326` |
 
+Verifiziert 2026-10-27: 12/12 Zellen treffen (1 berichtigt).
+
 ## Schnittstellen
+
+> Stand 2026-10-27 · geprüft gegen 34d77c6
 
 - Fassaden-Vertrag: Modul-Globals und Signaturen von `tickets_source.py` sind je Backend identisch (`tickets_source.py:47`) — `server.py`/`api.py` kennen kein Backend.
 - Board-Konfiguration: `BoardConfig` in `config.py`, je Board eine Instanz (`GITHUB_CORTEX_BOARD`).
 
 ## Standard: Deep Modules + Flow
+
+> Stand 2026-10-27 · geprüft gegen 34d77c6
 
 Kanonisch in `~/repos/speech-engine/ARCHITECTURE.md` (R1–R5); hier nicht kopiert.
 
