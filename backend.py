@@ -396,10 +396,7 @@ class FindingsBackend(BoardBackend):
             return []
         if not isinstance(data, dict):
             return []
-        excluded = self.config.excluded_categories
-        return [v for v in data.values()
-                if isinstance(v, dict) and v.get("active") is True
-                and v.get("category") not in excluded]
+        return [v for v in data.values() if isinstance(v, dict) and v.get("active") is True]
 
     @staticmethod
     def _description(finding: dict) -> str:

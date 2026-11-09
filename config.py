@@ -63,12 +63,6 @@ class BoardConfig:
     source: str = "markdown"
     # findings.json path for source=="findings" boards (None for markdown).
     findings_path: Path | None = None
-    # Finding categories a source=="findings" board never mirrors (Leo 09.11.
-    # „ja behebe das alles bitte“): e.g. `pm-watchdog` findings are copies of
-    # GitHub issues ("Issue steckt: <repo>#N") — GitHub is that board already.
-    # A previously mirrored task of such a category drops off the board and is
-    # trashed by sync_md_to_todoist (trashes run before creates, FBL-1).
-    excluded_categories: frozenset[str] = field(default_factory=frozenset)
     # GitHub repo for source=="github" boards, e.g. "NG-Bullseye/cortex".
     github_repo: str | None = None
 
@@ -291,7 +285,6 @@ MAINTENANCE_BOARD = BoardConfig(
     id_prefix="MNT",
     source="findings",
     findings_path=_MAINTENANCE_FINDINGS,
-    excluded_categories=frozenset({"pm-watchdog"}),
     todoist_parent="boards",
     todoist_project="maintenance",
 )
