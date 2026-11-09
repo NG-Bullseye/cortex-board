@@ -26,11 +26,11 @@ Der Flow: zwei Faces (MCP für Claude, REST für die App) rufen die Fassade `tic
 | Modul | Eingang | Ausgang | Bedingung | Stellschraube | Innenleben |
 |---|---|---|---|---|---|
 | GitHub→Todoist-Sync (abgeschaltet) | GitHub Issues | Todoist-Projekt `boards/cortex` | läuft nicht: Unit `sync-github-todoist.timer` ist `disabled` (nicht in diesem Repo); Projekt `cortex` am 10.10.2026 geleert (#144, `tools/close_frozen_cortex_project.py:129` über `todoist_backend.py:172` `close_task`), Rückweg `state/closed-frozen-cortex-2026-10-10.json` (je ID POST `tasks/<id>/reopen`) | — | `tools/sync_github_todoist.py:293` |
-| Token-Usage-Sampler | Claude-Transkripte | Zähler-Sample | Timer `cortex-board-token-sample.timer` (2 h) | — | `token_usage.py:215` |
+| Quota-API (Stand 2026-11-09, pma#333) | `GET /api/quota` | Tokens je Verbraucher (`token-usage report --days 7 --json`, 5 min Prozess-Cache) + RAM/Swap je Registry-Dienst (`systemctl show` je scope, `/proc/meminfo`); Titel aus `~/repos/monitor-mcp/registry.yaml` | je Request; Fehler 502 `token_usage_failed`/`systemctl_failed` | `MONITOR_REGISTRY` | `quota.py:140`, `api.py:93` |
 | Archivierung erledigter Tickets | Markdown-Board | `archive/` | manuell | — | `tools/archive_done_tickets.py:326` |
 | Findings→Todoist-Mirror (Board `maintenance`) | `~/repos/maintenance/state/findings.json`, nur `active`, ohne `excluded_categories` (`pm-watchdog` = GitHub-Issue-Kopien, Leo 09.11.) | Todoist `boards/maintenance`, `MNT-<sha1(key)[:8]>`; trashes vor creates | `maintenance-board-mirror.timer` 05:00 (Unit im maintenance-Repo, davor `sync_todoist_closures.py`) | `config.py:294` `excluded_categories` | `backend.py:399`, `tools/sync_md_to_todoist.py:230` |
 
-Verifiziert 2026-10-27: 12/12 Zellen treffen (1 berichtigt). Zeile Findings→Todoist-Mirror nachgezogen 2026-11-09 (Leo 09.11. „ja behebe das alles bitte“).
+Verifiziert 2026-10-27: 12/12 Zellen treffen (1 berichtigt). Zeile Findings→Todoist-Mirror nachgezogen 2026-11-09 (Leo 09.11. „ja behebe das alles bitte“). Token-Usage-Sampler (Timer, `token_usage.py`, `/api/token-usage`, Monitoring-Seite) 2026-11-09 entfernt, ersetzt durch Quota-API (pma#333).
 
 Verifiziert 2026-10-27: 12/12 Zellen treffen (1 berichtigt).
 

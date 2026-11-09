@@ -7,6 +7,7 @@ dependencies = [
     "mcp>=1.2",
     "fastapi>=0.110",
     "uvicorn>=0.27",
+    "pyyaml>=6",
 ]
 
 [build-system]
@@ -14,4 +15,4 @@ requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-py-modules = ["config", "backend", "tickets_source", "server", "api", "token_usage"]
+py-modules = ["config", "backend", "tickets_source", "server", "api", "quota"]

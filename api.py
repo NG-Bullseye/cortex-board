@@ -10,6 +10,7 @@ Endpoints (v2):
     GET  /api/healthz            -> {"ok": true, "columns": [...], "source": "..."}
     GET  /api/board              -> whole board, projected from docs/tickets
     GET  /api/board/{column}     -> one column {column, rev, count, tickets}
+    GET  /api/quota              -> tokens per consumer + RAM/swap per service (quota.py)
     GET  /*                      -> the built Ionic app (index.html SPA fallback)
 
 PUT /api/board/{column} is intentionally removed: replacing an entire column
@@ -21,18 +22,20 @@ Run:  uvicorn api:app --host 0.0.0.0 --port ${CORTEX_BOARD_PORT:-8930}
 from __future__ import annotations
 
 import json
+import logging
 import os
+import time
+import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
+import quota
 import tickets_source as ts
-import token_usage as tu
 
-DATA_DIR = Path(__file__).resolve().parent / "data"
-TOKEN_SAMPLES_FILE = DATA_DIR / "token_samples.jsonl"
+log = logging.getLogger("cortex-board.api")
 
 # The Ionic app now lives in-repo at app/ and builds to app/www — served from
 # here at the same origin. Repo-relative, so it survives a move / disaster recovery.
@@ -86,27 +89,19 @@ def scan_column(column: str) -> dict:
         raise HTTPException(status_code=404, detail=f"unknown scan column {column!r}")
 
 
-@app.get("/api/token-usage")
-def token_usage() -> dict:
-    """2h-sampled Claude-CLI token usage per agent-line, for the Monitoring
-    chart (T-287). Reads data/token_samples.jsonl (written by
-    tools/sample_token_usage.py via the cortex-board-token-sample.timer,
-    01/03/05/07/.../23 local). See token_usage.py module docstring for the
-    per-line mapping + the 4 verified mapping fallstricke (security blind
-    spot, morning-briefing time window, manager alias list, cortex a+b
-    combined, cerebellum tier2/tier3 model split).
-    """
-    samples: list[dict] = []
-    if TOKEN_SAMPLES_FILE.is_file():
-        with TOKEN_SAMPLES_FILE.open("r", encoding="utf-8") as f:
-            for line in f:
-                if not line.strip():
-                    continue
-                try:
-                    samples.append(json.loads(line))
-                except json.JSONDecodeError:
-                    continue
-    return {"lines": tu.line_meta(), "samples": samples}
+@app.get("/api/quota")
+def quota_view(request: Request):
+    """Quota view (pma#333): tokens per consumer (token-usage, 7 d) + RAM/swap
+    per registry service. Contract and sources: quota.py docstring."""
+    trace_id = request.headers.get("x-trace-id") or uuid.uuid4().hex
+    t0 = time.monotonic()
+    try:
+        body, status = quota.report(), 200
+    except quota.QuotaError as exc:
+        body, status = {"error": exc.code, "detail": str(exc), "trace_id": trace_id}, 502
+    log.info(json.dumps({"route": "/api/quota", "trace_id": trace_id, "status": status,
+                         "error": body.get("error"), "ms": round((time.monotonic() - t0) * 1000)}))
+    return JSONResponse(body, status_code=status, headers={"X-Trace-Id": trace_id})
 
 
 # ---- Static: serve the built Ionic app with SPA fallback --------------------
@@ -126,4 +121,5 @@ def spa(full_path: str):
 if __name__ == "__main__":
     import uvicorn
 
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
     uvicorn.run(app, host="0.0.0.0", port=int(os.environ.get("CORTEX_BOARD_PORT", "8930")))
