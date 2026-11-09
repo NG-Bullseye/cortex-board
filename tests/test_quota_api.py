@@ -9,6 +9,8 @@ pma#333 (Leo 02.11.: „links Token je Verbraucher, rechts RAM und Swap je Diens
      every registry service with a `unit:`; units without a cgroup are dropped.
   3. a failing token-usage run is a loud 502 `token_usage_failed`.
   4. the old /api/token-usage route is gone (404).
+  5. a template unit (`x@.service`) never reaches `systemctl show` (which rejects
+     it); its loaded instances are summed under the service.
 
 Mocked at the subprocess seam (`quota.subprocess.run`), registry from a tempfile.
 Runs under pytest and standalone (exit 0 == green).
@@ -109,6 +111,36 @@ def test_token_usage_failure_is_loud():
         resp = _client(FakeRun(token_rc=1), Path(d)).get("/api/quota")
     assert resp.status_code == 502 and resp.json()["error"] == "token_usage_failed"
     assert resp.headers["x-trace-id"] == resp.json()["trace_id"]
+
+
+TEMPLATE_REGISTRY = """
+services:
+  agent_revive:
+    title: "Agent-Revive"
+    unit: agent-revive@.service
+  bgllm_perception_judge:
+    title: "Perception Judge"
+    unit: perception-judge.service
+"""
+
+
+def test_template_unit_resolved_to_instances():
+    def fake(cmd, **_kw):
+        if "list-units" in cmd:
+            return subprocess.CompletedProcess(cmd, 0, "agent-revive@a.service loaded active running A\n"
+                                                         "agent-revive@b.service loaded inactive dead B\n", "")
+        if any("@." in a for a in cmd):  # real systemctl: "Unit name ... is not valid"
+            return subprocess.CompletedProcess(cmd, 1, "", "Failed to get properties: Unit name agent-revive@.service is not valid.")
+        return subprocess.CompletedProcess(cmd, 0, "Id=perception-judge.service\nMemoryCurrent=1000\nMemorySwapCurrent=10\n\n"
+                                                   "Id=agent-revive@a.service\nMemoryCurrent=300\nMemorySwapCurrent=5\n\n"
+                                                   "Id=agent-revive@b.service\nMemoryCurrent=[not set]\nMemorySwapCurrent=[not set]\n", "")
+    quota.subprocess.run = fake
+    with tempfile.TemporaryDirectory() as d:
+        quota.REGISTRY = Path(d) / "r.yaml"
+        quota.REGISTRY.write_text(TEMPLATE_REGISTRY)
+        rows = quota._memory(quota._services())["rows"]
+    assert [(r["unit"], r["memory"], r["swap"]) for r in rows] == [
+        ("perception-judge.service", 1000, 10), ("agent-revive@.service", 300, 5)]
 
 
 def test_old_route_gone():

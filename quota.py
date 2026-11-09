@@ -7,7 +7,8 @@ One facade: `report() -> dict` (contract of GET /api/quota). Errors raise
   CLI facade), cached in-process for TOKEN_TTL_S because a run takes seconds.
 - Memory: cgroup `MemoryCurrent`/`MemorySwapCurrent` of every service in
   ~/repos/monitor-mcp/registry.yaml with a `unit:`, one `systemctl show` per
-  scope (user/system); host totals from /proc/meminfo.
+  scope (user/system); templates (`x@.service`) summed over their instances;
+  host totals from /proc/meminfo.
 - Titles always come from registry.yaml.
 """
 from __future__ import annotations
@@ -93,17 +94,32 @@ def _tokens(services: dict) -> dict:
 
 
 def _cgroup_memory(units: list[str], scope: str) -> dict[str, tuple[int, int]]:
-    """unit -> (memory, swap) bytes; units without a live cgroup are omitted."""
+    """unit -> (memory, swap) bytes; units without a live cgroup are omitted.
+
+    A template (`x@.service`) is rejected by `systemctl show`, so it is resolved
+    to its loaded instances (`x@*.service`) and their cgroups are summed under it.
+    """
     if not units:
         return {}
-    cmd = ["systemctl"] + (["--user"] if scope == "user" else []) + [
-        "show", "-p", "Id", "-p", "MemoryCurrent", "-p", "MemorySwapCurrent", *units]
+    base = ["systemctl"] + (["--user"] if scope == "user" else [])
+    owner = {u: u for u in units if "@." not in u}
+    templates = [u.replace("@.", "@*.") for u in units if "@." in u]
+    if templates:
+        listing = _run(base + ["list-units", "--plain", "--no-legend", "--all", *templates], "systemctl_failed")
+        for line in listing.splitlines():
+            inst = line.split()[0]
+            owner[inst] = inst.split("@", 1)[0] + "@." + inst.rsplit(".", 1)[1]
+    if not owner:
+        return {}
     result: dict[str, tuple[int, int]] = {}
+    cmd = base + ["show", "-p", "Id", "-p", "MemoryCurrent", "-p", "MemorySwapCurrent", *owner]
     for block in _run(cmd, "systemctl_failed").split("\n\n"):
         props = dict(line.split("=", 1) for line in block.splitlines() if "=" in line)
         mem, swap = props.get("MemoryCurrent", ""), props.get("MemorySwapCurrent", "")
         if mem.isdigit():
-            result[props["Id"]] = (int(mem), int(swap) if swap.isdigit() else 0)
+            unit = owner.get(props["Id"], props["Id"])
+            prev_mem, prev_swap = result.get(unit, (0, 0))
+            result[unit] = (prev_mem + int(mem), prev_swap + (int(swap) if swap.isdigit() else 0))
     return result
 
 
