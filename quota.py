@@ -83,7 +83,8 @@ def _tokens(services: dict) -> dict:
         for r in data["by_service"]
     ]
     unattributed = [
-        {"cwd": u["cwd"], "kind": u["kind"], "sessions": u["calls"], "new": u["neu"], "total": u["gesamt"]}
+        {"cwd": u["cwd"], "title": u.get("agent") or u["cwd"], "kind": u["kind"], "sessions": u["calls"],
+         "new": u["neu"], "total": u["gesamt"]}
         for u in data["unattributed"]
     ]
     return {

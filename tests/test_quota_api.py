@@ -52,7 +52,9 @@ TOKEN_REPORT = {
         {"service": "bgllm_bewusstsein", "mode": "transcript", "calls": 3, "neu": 100, "gesamt": 900, "neu_24h": 14},
         {"service": "bgllm_perception_judge", "mode": "transcript", "calls": 9, "neu": 500, "gesamt": 700, "neu_24h": 71},
     ],
-    "unattributed": [{"cwd": "/home/leona/x", "kind": "interactive", "calls": 1, "neu": 42, "gesamt": 99}],
+    "unattributed": [{"cwd": "/home/leona/repos/builder-agent", "agent": "builder", "kind": "interactive",
+                      "calls": 1, "neu": 42, "gesamt": 99},
+                     {"cwd": "/home/leona/x", "agent": None, "kind": "interactive", "calls": 1, "neu": 1, "gesamt": 2}],
 }
 
 SHOW = {
@@ -95,7 +97,7 @@ def test_quota_contract():
     assert [r["title"] for r in tok["rows"]] == ["Perception Judge", "Bewusstseinsschicht"]
     assert tok["rows"][0] == {"service": "bgllm_perception_judge", "title": "Perception Judge", "kind": "transcript",
                               "sessions": 9, "new": 500, "total": 700, "new_per_24h": 71}
-    assert tok["unattributed"] == [{"cwd": "/home/leona/x", "kind": "interactive", "sessions": 1, "new": 42, "total": 99}]
+    assert [(u["title"], u["new"]) for u in tok["unattributed"]] == [("builder", 42), ("/home/leona/x", 1)]
     assert "cache_read" in tok["unit_note"]
     assert [c[0] for c in fake.calls].count("token-usage") == 1, "token-usage must be cached between requests"
     mem = body["memory"]
