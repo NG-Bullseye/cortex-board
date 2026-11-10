@@ -2,7 +2,7 @@
 
 ## Deep Modules — Ticket lesen/schreiben → Board projizieren
 
-> Stand 2026-10-27 · geprüft gegen 34d77c6
+> Stand 2026-11-10 · geprüft gegen b2b05ec
 
 Der Flow: zwei Faces (MCP für Claude, REST für die App) rufen die Fassade `tickets_source.py`, die genau ein Backend wählt (`BOARD_BACKEND`, Default `github`). Es gibt keine Flow-Datei; die Sequenz lebt in `tickets_source.py::_make_board`. Jede Innenleben-Zelle ist `datei:zeile` und muss per `grep -n` treffen.
 
@@ -48,3 +48,35 @@ Verifiziert 2026-10-27: 12/12 Zellen treffen (1 berichtigt).
 Kanonisch in `~/repos/speech-engine/ARCHITECTURE.md` (R1–R5); hier nicht kopiert.
 
 Weiteres: Betrieb und Board-Agent in `README.md`.
+
+<!-- graph:auto:start -->
+## Graph-Auto (generated 2026-11-10 by `bin/arch_auto_block.py`, do not edit by hand)
+
+**Deep Modules** (cross-file edges):
+- `todoist_backend.py` — 31
+- `config.py` — 27
+- `backend.py` — 24
+- `app/src/app/home/home.page.ts` — 20
+- `app/www/runtime.8af056472c13eb28.js` — 19
+- `tickets_source.py` — 18
+- `app/src/app/board/board.page.ts` — 18
+- `tools/sync_github_todoist.py` — 16
+
+**Interfaces** (modules/symbols imported or called from other files):
+- `app/www/runtime.8af056472c13eb28.js::a()` — used by 15 files
+- `config.py` — used by 8 files
+- `todoist_backend.py` — used by 7 files
+- `backend.py` — used by 5 files
+- `tickets_source.py` — used by 4 files
+- `app/src/app/home/home.page.ts` — used by 3 files
+- `github_backend.py` — used by 3 files
+- `tickets_source.py::_make_board()` — used by 3 files
+- `tools/sync_github_todoist.py` — used by 3 files
+- `tools/sync_md_to_todoist.py` — used by 3 files
+
+**Bus connections** (redis / route / http nodes of the house graph):
+- `http:8765` ← `app/src/app/docs/docs.page.ts`
+- `http:8900` ← `app/src/app/docs/docs.page.ts`
+- `http:8903` ← `app/src/app/docs/docs.page.ts`
+- `http:8930` ← `app/src/environments/environment.ts`
+<!-- graph:auto:end -->
