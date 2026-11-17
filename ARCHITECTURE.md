@@ -84,7 +84,7 @@ Weiteres: Betrieb und Board-Agent in `README.md`.
 <!-- services:begin -->
 ## Aktive Services
 
-> Stand 2026-11-17 18:35 · generiert von `~/repos/maintenance/repo_inventory.py` (Skill `repo-inventar`), nicht von Hand editieren
+> Stand 2026-11-17 18:41 · generiert von `~/repos/maintenance/repo_inventory.py` (Skill `repo-inventar`), nicht von Hand editieren
 
 | Art | Name | Wofür | Zustand | Zuletzt benutzt |
 |---|---|---|---|---|
