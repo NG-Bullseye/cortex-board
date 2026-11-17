@@ -15,8 +15,9 @@ finished tickets piled up as Karteileichen instead of moving into the dated
      the live board uses; every ticket whose parsed status word is one of
      {done, closed, resolved, wont-do, wontfix} is `git mv`-ed into
      `<tickets_dir>/archive/<YYYY-MM>/` and the move committed.
-  3. PUSH. `git push origin HEAD:develop` (PO-authorized deterministic board-DATA
-     housekeeping exception — develop only, never main; robust to detached HEAD).
+  3. PUSH. `git push origin HEAD:main`, only when steps 1/2 committed something
+     (house rule since 27.10.: every repo works on main; the old develop mirror
+     diverged and failed the board-mirror unit, 17.11.).
 
 Reusable by config: a second board (maintenance/security) is just another
 `--board` entry once its BoardConfig exists in config.py. Nothing here is
@@ -170,11 +171,11 @@ def _archive(board_cfg, repo: Path, month: str, dry_run: bool) -> list[dict]:
     return cands
 
 
-def _push(repo: Path, dry_run: bool, no_push: bool) -> bool:
-    """Step 3: push HEAD to develop (explicit refspec, detached-HEAD safe)."""
-    if dry_run or no_push:
+def _push(repo: Path, dry_run: bool, no_push: bool, changed: bool = True) -> bool:
+    """Step 3: push HEAD to main (explicit refspec), only if this run committed."""
+    if dry_run or no_push or not changed:
         return False
-    _git(repo, "push", "origin", "HEAD:develop")
+    _git(repo, "push", "origin", "HEAD:main")
     return True
 
 
@@ -211,8 +212,8 @@ def run(board_key: str, month: str, dry_run: bool, no_push: bool) -> int:
     for c in cands:
         print(f"  archive  {c['id']:8s}  [{c['status']}]  {c['path'].name}")
 
-    pushed = _push(repo, dry_run, no_push)
-    print(f"--- PUSH: {'pushed HEAD:develop' if pushed else 'skipped'} ---")
+    pushed = _push(repo, dry_run, no_push, changed=bool(drift or cands))
+    print(f"--- PUSH: {'pushed HEAD:main' if pushed else 'skipped'} ---")
     return 0
 
 
@@ -331,7 +332,7 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true",
                     help="show drift + archive plan, write/commit/push nothing")
     ap.add_argument("--no-push", action="store_true",
-                    help="commit locally but do not push to develop")
+                    help="commit locally but do not push to main")
     ap.add_argument("--month", default=None,
                     help="archive sub-dir YYYY-MM (default: current month)")
     ap.add_argument("--selftest", action="store_true",
