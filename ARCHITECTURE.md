@@ -80,3 +80,15 @@ Weiteres: Betrieb und Board-Agent in `README.md`.
 - `http:8903` ← `app/src/app/docs/docs.page.ts`
 - `http:8930` ← `app/src/environments/environment.ts`
 <!-- graph:auto:end -->
+
+<!-- services:begin -->
+## Aktive Services
+
+> Stand 2026-11-17 18:26 · generiert von `~/repos/maintenance/repo_inventory.py` (Skill `repo-inventar`), nicht von Hand editieren
+
+| Art | Name | Wofür | Zustand | Zuletzt benutzt |
+|---|---|---|---|---|
+| timer | `maintenance-board-mirror.timer` | Board-Mirror — spiegelt das md-Board (autoritativ) einweg nach Leos Todoist-Sicht (T-2 Phase 3) | Timer | 2026-11-17 05:00 |
+| unit | `cortex-board-api.service` | Cortex Board REST API (Kanban board for the Ionic/Capacitor app) | läuft | 2026-11-12 17:11 |
+
+<!-- services:end -->
