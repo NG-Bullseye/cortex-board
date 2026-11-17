@@ -359,7 +359,7 @@ GITHUB_CORTEX_BOARD = BoardConfig(
 # ---- GitHub-backed Cortex-B board (Lane B — same GitHub Issues source as
 #      GITHUB_CORTEX_BOARD, filtered to tickets tagged `[cortex-b]`) --------
 # NOT YET WIRED TO PRODUCTION (T-251 review-fix): the live
-# sync-github-todoist.timer (every 5min) invokes sync_github_todoist.py with
+# sync-github-todoist.timer (every 5min, removed 2026-11-17) invoked sync_github_todoist.py with
 # no --board arg, i.e. only the default "cortex-github" (Lane A). Nothing
 # in production runs `--board cortex-b` against this github-sourced config
 # today — it's a ready-but-dormant board for whenever the GitHub-Issues-SSOT
